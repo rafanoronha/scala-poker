@@ -1,7 +1,7 @@
 package spoker
 
 object Rank extends Enumeration {
-  val Ten, Jack, Queen, King, Ace = Value
+  val Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
 }
 
 sealed trait Suit
