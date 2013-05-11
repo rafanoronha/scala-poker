@@ -1,17 +1,20 @@
 package spoker
 
+import Card._
+import Rank._
+
 object Game {
 
-  def apply(cards: Seq[(Rank, Suit)]): Game = {
+  def apply(cards: Seq[Card]): Game = {
 
-    val sameSuit = 1 == cards.map(_._2).toSet.size
+    val sameSuit = 1 == cards.map(_.suit).toSet.size
 
-    cards match {
-      case (Seq((Ace,_),(King,_),(Queen,_),(Jack,_),(Ten,_))) if sameSuit => new RoyalFlush(cards)
+    toTuples(cards.sorted) match {
+      case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if sameSuit => new RoyalFlush(cards)
     }
   }
 }
 
-sealed abstract class Game(cards: Seq[(Rank, Suit)])
+sealed abstract class Game(cards: Seq[Card])
 
-class RoyalFlush(cards: Seq[(Rank, Suit)]) extends Game(cards)
+class RoyalFlush(cards: Seq[Card]) extends Game(cards)
