@@ -1,29 +1,32 @@
 package spoker
 
-import Card._
-import Rank._
+package object game {
 
-object Game extends StraightAwareness with FlushAwareness {
-  def apply(implicit cards:Seq[Card]): Game = {
-    toTuples(cards.sorted) match {
-      case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
-      case (_) if straight && flush => new StraightFlush
+  import spoker.cards._
+  import spoker.cards.Rank._
+
+  object Game extends StraightAwareness with FlushAwareness {
+    def apply(implicit cards:Cards): Game = {
+      toTuples(cards.sorted) match {
+        case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
+        case (_) if straight && flush => new StraightFlush
+      }
     }
   }
-}
 
-trait StraightAwareness {
-  def straight(implicit cards:Seq[Card]) = {
-    val ranks = cards.map(_.rank)
-    5 == ranks.toSet.size && ranks.head.id == 4 - ranks.last.id
+  trait StraightAwareness {
+    def straight(implicit cards:Cards) = {
+      val ranks = cards.map(_.rank)
+      5 == ranks.toSet.size && ranks.head.id == 4 - ranks.last.id
+    }
   }
+
+  trait FlushAwareness {
+    def flush(implicit cards:Cards) = 1 == cards.map(_.suit).toSet.size
+  }
+
+  sealed abstract class Game(cards: Cards)
+
+  class RoyalFlush(implicit cards: Cards) extends Game(cards)
+  class StraightFlush(implicit cards: Cards) extends Game(cards)
 }
-
-trait FlushAwareness {
-  def flush(implicit cards:Seq[Card]) = 1 == cards.map(_.suit).toSet.size
-}
-
-sealed abstract class Game(cards: Seq[Card])
-
-class RoyalFlush(implicit cards: Seq[Card]) extends Game(cards)
-class StraightFlush(implicit cards: Seq[Card]) extends Game(cards)

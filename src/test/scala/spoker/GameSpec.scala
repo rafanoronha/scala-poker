@@ -1,6 +1,7 @@
-package spoker
+package spoker.game
 
-import Rank._
+import spoker.cards.Rank._
+import spoker.cards.Suit._
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 

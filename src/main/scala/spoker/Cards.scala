@@ -1,23 +1,23 @@
 package spoker
 
-object Rank extends Enumeration {
-  val Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
-}
+package object cards {
 
-sealed trait Suit
+  type Cards = Seq[Card]
 
-object Clubs extends Suit
-object Diamonds extends Suit
-object Hearths extends Suit
-object Spades extends Suit
+  class Card(val rank: Rank.Value, val suit: Suit.Value) extends Ordered[Card]{
+    def compare(that: Card): Int = this.rank compare that.rank
+  }
 
-class Card(val rank: Rank.Value, val suit: Suit) extends Ordered[Card]{
-  def compare(that: Card): Int = this.rank compare that.rank
-}
+  object Rank extends Enumeration {
+    val Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
+  }
 
-object Card {
-  implicit def fromTuple (tuple:(Rank.Value, Suit)) = new Card(tuple._1, tuple._2)
-  implicit def fromTuples(tuples:Seq[(Rank.Value, Suit)]) = tuples.map(fromTuple _)
+  object Suit extends Enumeration {
+    val Clubs, Diamonds, Hearths, Spades = Value
+  }
+
+  implicit def fromTuple (tuple:(Rank.Value, Suit.Value)) = new Card(tuple._1, tuple._2)
+  implicit def fromTuples(tuples:Seq[(Rank.Value, Suit.Value)]) = tuples.map(fromTuple _)
   implicit def toTuple(card:Card) = (card.rank, card.suit)
-  implicit def toTuples(cards:Seq[Card]):Seq[(Rank.Value, Suit)] = cards.map(toTuple _)
+  implicit def toTuples(cards:Seq[Card]):Seq[(Rank.Value, Suit.Value)] = cards.map(toTuple _)
 }
