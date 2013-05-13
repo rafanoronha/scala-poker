@@ -16,6 +16,9 @@ class GameSpec extends FunSpec with ShouldMatchers {
   it("should understand straight flush") {
     Game(Seq((Six,Diamonds),(Seven,Diamonds),(Eight,Diamonds),(Nine,Diamonds),(Ten,Diamonds))).isInstanceOf[StraightFlush].should(be(true))
   }
+  it("should understand flush") {
+    Game(Seq((Seven,Hearths),(Queen,Hearths),(Nine,Hearths),(Two,Hearths),(Five,Hearths))).isInstanceOf[Flush].should(be(true))
+  }
   it("should understand broadway straight") {
     Game(Seq((Ace,Spades),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))).isInstanceOf[Straight].should(be(true))
   }

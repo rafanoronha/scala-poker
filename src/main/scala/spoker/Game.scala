@@ -11,6 +11,7 @@ package object game {
       toTuples(cards) match {
         case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
         case (_) if straight && flush => new StraightFlush
+        case (_) if flush => new Flush
         case (_) if straight => new Straight
         case (_) if threeOfAKind => new ThreeOfAKind
         case (_) if twoPairs => new TwoPair
@@ -55,6 +56,7 @@ package object game {
 
   class RoyalFlush(implicit cards: Cards) extends Game(cards)
   class StraightFlush(implicit cards: Cards) extends Game(cards)
+  class Flush(implicit cards: Cards) extends Game(cards)
   class Straight(implicit cards: Cards) extends Game(cards)
   class ThreeOfAKind(implicit cards: Cards) extends Game(cards)
   class TwoPair(implicit cards: Cards) extends Game(cards)
