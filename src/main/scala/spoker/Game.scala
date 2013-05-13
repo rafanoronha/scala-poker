@@ -5,12 +5,13 @@ package object game {
   import spoker.cards._
   import spoker.cards.Rank._
 
-  object Game extends StraightAwareness with FlushAwareness with PairAwareness with ThreeOfAKindAwareness {
+  object Game extends StraightAwareness with FlushAwareness with PairAwareness with ThreeOfAKindAwareness with FourOfAKindAwareness {
     def apply(seq:Cards): Game = {
       implicit val cards = seq.sorted
       toTuples(cards) match {
         case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
         case (_) if straight && flush => new StraightFlush
+        case (_) if fourOfAKind => new FourOfAKind
         case (_) if threeOfAKind && onePair => new FullHouse
         case (_) if flush => new Flush
         case (_) if straight => new Straight
@@ -46,6 +47,10 @@ package object game {
     def threeOfAKind(implicit cards:Cards) = 1 == numberOfGroupsOf(3)(cards)
   }
 
+  trait FourOfAKindAwareness extends GroupAwareness {
+    def fourOfAKind(implicit cards:Cards) = 1 == numberOfGroupsOf(4)(cards)
+  }
+
   trait GroupAwareness {
     protected def numberOfGroupsOf(x:Int)(cards:Cards) = {
       cards.map(_.rank).groupBy(identity)
@@ -57,6 +62,7 @@ package object game {
 
   class RoyalFlush(implicit cards: Cards) extends Game(cards)
   class StraightFlush(implicit cards: Cards) extends Game(cards)
+  class FourOfAKind(implicit cards: Cards) extends Game(cards)
   class FullHouse(implicit cards: Cards) extends Game(cards)
   class Flush(implicit cards: Cards) extends Game(cards)
   class Straight(implicit cards: Cards) extends Game(cards)

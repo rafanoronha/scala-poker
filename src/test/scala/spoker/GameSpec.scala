@@ -16,6 +16,9 @@ class GameSpec extends FunSpec with ShouldMatchers {
   it("should understand straight flush") {
     Game(Seq((Six,Diamonds),(Seven,Diamonds),(Eight,Diamonds),(Nine,Diamonds),(Ten,Diamonds))).isInstanceOf[StraightFlush].should(be(true))
   }
+  it("should understand four of a kind") {
+    Game(Seq((Ace,Spades),(Ace,Hearths),(Ace,Clubs),(Ace,Diamonds),(Three,Clubs))).isInstanceOf[FourOfAKind].should(be(true))
+  }
   it("should understand full house") {
     Game(Seq((Three,Spades),(Three,Hearths),(Two,Spades),(Two,Clubs),(Two,Diamonds))).isInstanceOf[FullHouse].should(be(true))
   }
@@ -26,7 +29,7 @@ class GameSpec extends FunSpec with ShouldMatchers {
     Game(Seq((Ace,Spades),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))).isInstanceOf[Straight].should(be(true))
   }
   it("should understand three of a kind") {
-    Game(Seq((Three,Spades),(Three,Hearths),(Queen,Hearths),(Ace, Diamonds),(Three,Clubs))).isInstanceOf[ThreeOfAKind].should(be(true))
+    Game(Seq((Three,Spades),(Three,Hearths),(Queen,Hearths),(Ace,Diamonds),(Three,Clubs))).isInstanceOf[ThreeOfAKind].should(be(true))
   }
   it("should understand two pair") {
     Game(Seq((Three,Spades),(Three,Hearths),(Five,Spades),(Two,Clubs),(Two,Diamonds))).isInstanceOf[TwoPair].should(be(true))
