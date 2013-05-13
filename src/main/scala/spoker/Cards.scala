@@ -9,7 +9,7 @@ package object cards {
   }
 
   object Rank extends Enumeration {
-    val Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
+    val Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
   }
 
   object Suit extends Enumeration {
