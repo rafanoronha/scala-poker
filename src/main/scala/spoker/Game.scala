@@ -10,6 +10,7 @@ package object game {
       toTuples(cards.sorted) match {
         case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
         case (_) if straight && flush => new StraightFlush
+        case (_) => new HighCard
       }
     }
   }
@@ -32,4 +33,5 @@ package object game {
 
   class RoyalFlush(implicit cards: Cards) extends Game(cards)
   class StraightFlush(implicit cards: Cards) extends Game(cards)
+  class HighCard(implicit cards: Cards) extends Game(cards)
 }
