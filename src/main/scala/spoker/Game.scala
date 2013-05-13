@@ -17,12 +17,15 @@ package object game {
   trait StraightAwareness {
     def straight(implicit cards:Cards) = {
       val ranks = cards.map(_.rank)
-      5 == ranks.toSet.size && ranks.head.id == 4 - ranks.last.id
+      ranks.takeRight(ranks.size-1).zip(ranks)
+        .forall((t) => t._1.id == 1+t._2.id)
     }
   }
 
   trait FlushAwareness {
-    def flush(implicit cards:Cards) = 1 == cards.map(_.suit).toSet.size
+    def flush(implicit cards:Cards) = {
+      cards.map(_.suit).forall(_ == cards.head.suit)
+    }
   }
 
   sealed abstract class Game(cards: Cards)
