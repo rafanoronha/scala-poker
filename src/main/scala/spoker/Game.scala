@@ -5,35 +5,86 @@ package object game {
   import spoker.cards._
   import spoker.cards.Rank._
 
-  object Game extends StraightAwareness with FlushAwareness with PairAwareness with ThreeOfAKindAwareness with FourOfAKindAwareness {
+  object Game {
     def apply(seq:Cards): Game = {
       implicit val cards = seq.sorted
-      toTuples(cards) match {
-        case (Seq((Ten,_),(Jack,_),(Queen,_),(King,_),(Ace,_))) if flush => new RoyalFlush
-        case (_) if straight && flush => new StraightFlush
-        case (_) if fourOfAKind => new FourOfAKind
-        case (_) if threeOfAKind && onePair => new FullHouse
-        case (_) if flush => new Flush
-        case (_) if straight => new Straight
-        case (_) if threeOfAKind => new ThreeOfAKind
-        case (_) if twoPairs => new TwoPair
-        case (_) if onePair => new OnePair
+      cards match {
+        case Broadway(_@ Straight(_@ Flush(_))) => new RoyalFlush
+        case Straight(_@ Flush(_)) => new StraightFlush
+        case FourOfAKind(_) => new FourOfAKind
+        case ThreeOfAKind(_@ OnePair(_)) => new FullHouse
+        case Flush(_) => new Flush
+        case Straight(_) => new Straight
+        case ThreeOfAKind(_) => new ThreeOfAKind
+        case TwoPairs(_) => new TwoPair
+        case OnePair(_) => new OnePair
         case (_) => new HighCard
       }
     }
   }
 
-  trait StraightAwareness {
-    def straight(implicit cards:Cards) = {
-      val ranks = cards.map(_.rank)
-      ranks.takeRight(ranks.size-1).zip(ranks)
-        .forall((t) => t._1.id == 1+t._2.id)
+  object Broadway {
+    def unapply(cards:Cards) = {
+      cards.map(_.rank).last match {
+        case Ace => Some(cards)
+        case _ => None
+      }
     }
   }
 
-  trait FlushAwareness {
-    def flush(implicit cards:Cards) = {
-      cards.map(_.suit).forall(_ == cards.head.suit)
+  object Straight {
+    def unapply(cards:Cards) = {
+      val first = cards.head.rank.id
+      val S = (first to first+4)
+      cards.map(_.rank.id) match {
+          case S => Some(cards)
+          case _ => None
+      }
+    }
+  }
+
+  object Flush {
+    def unapply(cards:Cards) = {
+      cards.map(_.suit).forall(_ == cards.head.suit) match {
+        case true => Some(cards)
+        case _ => None
+      }
+    }
+  }
+
+  object OnePair extends PairAwareness {
+    def unapply(cards:Cards) = {
+      numberOfPairs(cards) match {
+        case 1 => Some(cards)
+        case _ => None
+      }
+    }
+  }
+
+  object TwoPairs extends PairAwareness {
+    def unapply(cards:Cards) = {
+      numberOfPairs(cards) match {
+        case 2 => Some(cards)
+        case _ => None
+      }
+    }
+  }
+
+  object ThreeOfAKind extends PairAwareness {
+    def unapply(cards:Cards) = {
+      numberOfGroupsOf(3)(cards) match {
+        case 1 => Some(cards)
+        case _ => None
+      }
+    }
+  }
+
+  object FourOfAKind extends PairAwareness {
+    def unapply(cards:Cards) = {
+      numberOfGroupsOf(4)(cards) match {
+        case 1 => Some(cards)
+        case _ => None
+      }
     }
   }
 
@@ -41,14 +92,6 @@ package object game {
     val numberOfPairs = numberOfGroupsOf(2)_
     def onePair(implicit cards:Cards) = 1 == numberOfPairs(cards)
     def twoPairs(implicit cards:Cards) = 2 == numberOfPairs(cards)
-  }
-
-  trait ThreeOfAKindAwareness extends GroupAwareness {
-    def threeOfAKind(implicit cards:Cards) = 1 == numberOfGroupsOf(3)(cards)
-  }
-
-  trait FourOfAKindAwareness extends GroupAwareness {
-    def fourOfAKind(implicit cards:Cards) = 1 == numberOfGroupsOf(4)(cards)
   }
 
   trait GroupAwareness {
