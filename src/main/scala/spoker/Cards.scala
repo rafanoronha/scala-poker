@@ -6,6 +6,7 @@ package object cards {
 
   class Card(val rank: Rank.Value, val suit: Suit.Value) extends Ordered[Card]{
     def compare(that: Card): Int = this.rank compare that.rank
+    override def toString = toTuple(this).toString
   }
 
   object Rank extends Enumeration {
