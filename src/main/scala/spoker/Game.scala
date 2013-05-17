@@ -101,7 +101,15 @@ package object game {
     }
   }
 
-  sealed abstract class Game(cards: Cards)
+  sealed abstract class Game(cards: Cards) extends Ordered[Game] {
+    def compare(that: Game): Int = this.ranking.compareTo(that.ranking)
+
+    val ranking = GameRanking.withName(this.getClass().getSimpleName())
+  }
+
+  object GameRanking extends Enumeration {
+    val HighCard, OnePair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush = Value
+  }
 
   class RoyalFlush(implicit cards: Cards) extends Game(cards)
   class StraightFlush(implicit cards: Cards) extends Game(cards)
@@ -113,5 +121,4 @@ package object game {
   class TwoPair(implicit cards: Cards) extends Game(cards)
   class OnePair(implicit cards: Cards) extends Game(cards)
   class HighCard(implicit cards: Cards) extends Game(cards)
-
 }
