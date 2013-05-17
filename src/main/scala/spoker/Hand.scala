@@ -1,12 +1,12 @@
 package spoker
 
-package object game {
+package object hand {
 
   import spoker.cards._
   import spoker.cards.Rank._
 
-  object Game {
-    def apply(seq:Cards): Game = {
+  object Hand {
+    def apply(seq:Cards): Hand = {
       implicit val cards = seq.sorted
       cards match {
         case Broadway(_@ Straight(_@ Flush(_))) => new RoyalFlush
@@ -101,24 +101,24 @@ package object game {
     }
   }
 
-  sealed abstract class Game(cards: Cards) extends Ordered[Game] {
-    def compare(that: Game): Int = this.ranking.compareTo(that.ranking)
+  sealed abstract class Hand(cards: Cards) extends Ordered[Hand] {
+    def compare(that: Hand): Int = this.ranking.compareTo(that.ranking)
 
-    val ranking = GameRanking.withName(this.getClass().getSimpleName())
+    val ranking = HandRanking.withName(this.getClass().getSimpleName())
   }
 
-  object GameRanking extends Enumeration {
+  object HandRanking extends Enumeration {
     val HighCard, OnePair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush = Value
   }
 
-  class RoyalFlush(implicit cards: Cards) extends Game(cards)
-  class StraightFlush(implicit cards: Cards) extends Game(cards)
-  class FourOfAKind(implicit cards: Cards) extends Game(cards)
-  class FullHouse(implicit cards: Cards) extends Game(cards)
-  class Flush(implicit cards: Cards) extends Game(cards)
-  class Straight(implicit cards: Cards) extends Game(cards)
-  class ThreeOfAKind(implicit cards: Cards) extends Game(cards)
-  class TwoPair(implicit cards: Cards) extends Game(cards)
-  class OnePair(implicit cards: Cards) extends Game(cards)
-  class HighCard(implicit cards: Cards) extends Game(cards)
+  class RoyalFlush(implicit cards: Cards) extends Hand(cards)
+  class StraightFlush(implicit cards: Cards) extends Hand(cards)
+  class FourOfAKind(implicit cards: Cards) extends Hand(cards)
+  class FullHouse(implicit cards: Cards) extends Hand(cards)
+  class Flush(implicit cards: Cards) extends Hand(cards)
+  class Straight(implicit cards: Cards) extends Hand(cards)
+  class ThreeOfAKind(implicit cards: Cards) extends Hand(cards)
+  class TwoPair(implicit cards: Cards) extends Hand(cards)
+  class OnePair(implicit cards: Cards) extends Hand(cards)
+  class HighCard(implicit cards: Cards) extends Hand(cards)
 }
