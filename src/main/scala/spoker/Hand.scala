@@ -9,10 +9,10 @@ package object hand {
     def apply(seq: Cards): Hand = {
       implicit val cards = seq.sorted
       cards match {
-        case Broadway(_@Straight(_@Flush(_))) => new RoyalFlush
-        case Straight(_@Flush(_)) => new StraightFlush
+        case Broadway(Straight(Flush(_))) => new RoyalFlush
+        case Straight(Flush(_)) => new StraightFlush
         case FourOfAKind(_) => new FourOfAKind
-        case ThreeOfAKind(_@OnePair(_)) => new FullHouse
+        case ThreeOfAKind(OnePair(_)) => new FullHouse
         case Flush(_) => new Flush
         case Straight(_) => new Straight
         case ThreeOfAKind(_) => new ThreeOfAKind
