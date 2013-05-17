@@ -8,51 +8,64 @@ import org.scalatest.matchers.ShouldMatchers
 class HandSpec extends FunSpec with ShouldMatchers {
 
   it("should understand royal flush") {
-    Hand(Seq((Ace,Clubs),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))).isInstanceOf[RoyalFlush].should(be(true))
+    Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs)))
+      .isInstanceOf[RoyalFlush] should be(true)
   }
   it("should understand a hand irrespective of order of the cards") {
-    Hand(Seq((Ace,Clubs),(Queen,Clubs),(King,Clubs),(Ten,Clubs),(Jack,Clubs))).isInstanceOf[RoyalFlush].should(be(true))
+    Hand(Seq((Ace, Clubs), (Queen, Clubs), (King, Clubs), (Ten, Clubs), (Jack, Clubs)))
+      .isInstanceOf[RoyalFlush] should be(true)
   }
   it("should understand straight flush") {
-    Hand(Seq((Six,Diamonds),(Seven,Diamonds),(Eight,Diamonds),(Nine,Diamonds),(Ten,Diamonds))).isInstanceOf[StraightFlush].should(be(true))
+    Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds)))
+      .isInstanceOf[StraightFlush] should be(true)
   }
   it("should understand four of a kind") {
-    Hand(Seq((Ace,Spades),(Ace,Hearths),(Ace,Clubs),(Ace,Diamonds),(Three,Clubs))).isInstanceOf[FourOfAKind].should(be(true))
+    Hand(Seq((Ace, Spades), (Ace, Hearths), (Ace, Clubs), (Ace, Diamonds), (Three, Clubs)))
+      .isInstanceOf[FourOfAKind] should be(true)
   }
   it("should understand full house") {
-    Hand(Seq((Three,Spades),(Three,Hearths),(Two,Spades),(Two,Clubs),(Two,Diamonds))).isInstanceOf[FullHouse].should(be(true))
+    Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds)))
+      .isInstanceOf[FullHouse] should be(true)
   }
   it("should understand flush") {
-    Hand(Seq((Seven,Hearths),(Queen,Hearths),(Nine,Hearths),(Two,Hearths),(Five,Hearths))).isInstanceOf[Flush].should(be(true))
+    Hand(Seq((Seven, Hearths), (Queen, Hearths), (Nine, Hearths), (Two, Hearths), (Five, Hearths)))
+      .isInstanceOf[Flush] should be(true)
   }
   it("should understand broadway straight") {
-    Hand(Seq((Ace,Spades),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))).isInstanceOf[Straight].should(be(true))
+    Hand(Seq((Ace, Spades), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs)))
+      .isInstanceOf[Straight] should be(true)
   }
   it("should understand three of a kind") {
-    Hand(Seq((Three,Spades),(Three,Hearths),(Queen,Hearths),(Ace,Diamonds),(Three,Clubs))).isInstanceOf[ThreeOfAKind].should(be(true))
+    Hand(Seq((Three, Spades), (Three, Hearths), (Queen, Hearths), (Ace, Diamonds), (Three, Clubs)))
+      .isInstanceOf[ThreeOfAKind] should be(true)
   }
   it("should understand two pair") {
-    Hand(Seq((Three,Spades),(Three,Hearths),(Five,Spades),(Two,Clubs),(Two,Diamonds))).isInstanceOf[TwoPair].should(be(true))
+    Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds)))
+      .isInstanceOf[TwoPair] should be(true)
   }
   it("should understand one pair") {
-    Hand(Seq((Three,Spades),(Four,Spades),(Five,Spades),(Six,Clubs),(Six,Diamonds))).isInstanceOf[OnePair].should(be(true))
+    Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds)))
+      .isInstanceOf[OnePair] should be(true)
   }
   it("should understand high card") {
-    Hand(Seq((Ace,Clubs),(Seven,Diamonds),(Eight,Diamonds),(Nine,Diamonds),(Ten,Diamonds))).isInstanceOf[HighCard].should(be(true))
+    Hand(Seq((Ace, Clubs), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds)))
+      .isInstanceOf[HighCard] should be(true)
   }
   it("should be ranked") {
-    val actual = Seq(Hand(Seq((Ace,Clubs),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))),
-      Hand(Seq((Three,Spades),(Three,Hearths),(Two,Spades),(Two,Clubs),(Two,Diamonds))),
-        Hand(Seq((Three,Spades),(Three,Hearths),(Five,Spades),(Two,Clubs),(Two,Diamonds)))).map(_.ranking)
-    actual should equal (Seq(HandRanking.RoyalFlush,HandRanking.FullHouse,HandRanking.TwoPair))
+    val actual = Seq(
+      Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))),
+      Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds))),
+      Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds))))
+      .map(_.ranking)
+    actual should equal(Seq(HandRanking.RoyalFlush, HandRanking.FullHouse, HandRanking.TwoPair))
   }
   it("should compare different hands by ranking") {
-    Hand(Seq((Ace,Clubs),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))) should
-      be > Hand(Seq((Six,Diamonds),(Seven,Diamonds),(Eight,Diamonds),(Nine,Diamonds),(Ten,Diamonds)))
-    Hand(Seq((Ace,Spades),(King,Clubs),(Queen,Clubs),(Jack,Clubs),(Ten,Clubs))) should
-      be < Hand(Seq((Three,Spades),(Three,Hearths),(Two,Spades),(Two,Clubs),(Two,Diamonds)))
-    Hand(Seq((Three,Spades),(Three,Hearths),(Five,Spades),(Two,Clubs),(Two,Diamonds))) should
-      be > Hand(Seq((Three,Spades),(Four,Spades),(Five,Spades),(Six,Clubs),(Six,Diamonds)))
+    Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))) should
+      be > Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds)))
+    Hand(Seq((Ace, Spades), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))) should
+      be < Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds)))
+    Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds))) should
+      be > Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds)))
   }
   it("should rank royal flush as greater than straight flush") {
     HandRanking.RoyalFlush should be > HandRanking.StraightFlush
