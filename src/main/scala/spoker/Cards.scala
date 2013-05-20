@@ -22,9 +22,9 @@ package object cards {
 
   implicit def fromTuple(tuple: CardTuple) = new Card(tuple._1, tuple._2)
 
-  implicit def fromTuples(tuples: CardTuples) = tuples.map(fromTuple _)
+  implicit def fromTuples(tuples: CardTuples) = tuples map fromTuple _
 
   implicit def toTuple(card: Card) = (card.rank, card.suit)
 
-  implicit def toTuples(cards: Cards) = cards.map(toTuple _)
+  implicit def toTuples(cards: Cards) = cards map toTuple _
 }

@@ -24,17 +24,20 @@ package object hand {
   }
 
   object Broadway {
-    def unapply(cards: Cards) = cards.map(_.rank).last match {
-      case Ace => Some(cards)
-      case _ => None
-    }
+    def unapply(cards: Cards) =
+      cards map {
+        _.rank
+      } last match {
+        case Ace => Some(cards)
+        case _ => None
+      }
   }
 
   object Straight {
     def unapply(cards: Cards) = {
       val first = cards.head.rank.id
-      val S = (first to first + 4)
-      cards.map(_.rank.id) match {
+      val S = first to first + 4
+      cards map (_.rank.id) match {
         case S => Some(cards)
         case _ => None
       }
@@ -42,10 +45,15 @@ package object hand {
   }
 
   object Flush {
-    def unapply(cards: Cards) = cards.map(_.suit).forall(_ == cards.head.suit) match {
-      case true => Some(cards)
-      case _ => None
-    }
+    def unapply(cards: Cards) =
+      cards map {
+        _.suit
+      } forall {
+        _ == cards.head.suit
+      } match {
+        case true => Some(cards)
+        case _ => None
+      }
   }
 
   object OnePair extends PairAwareness {
@@ -77,7 +85,7 @@ package object hand {
   }
 
   trait PairAwareness extends GroupAwareness {
-    val numberOfPairs = numberOfGroupsOf(2) _
+    val numberOfPairs = numberOfGroupsOf(2)_
 
     def onePair(implicit cards: Cards) = 1 == numberOfPairs(cards)
 
@@ -85,16 +93,18 @@ package object hand {
   }
 
   trait GroupAwareness {
-    protected def numberOfGroupsOf(x: Int)(cards: Cards) = {
-      cards.map(_.rank).groupBy(identity)
-        .filter(x == _._2.size).size
-    }
+    protected def numberOfGroupsOf(x: Int)(cards: Cards) =
+      cards map {
+        _.rank
+      } groupBy (identity) filter {
+        x == _._2.size
+      } size
   }
 
   sealed abstract class Hand(cards: Cards) extends Ordered[Hand] {
     def compare(that: Hand): Int = this.ranking.compareTo(that.ranking)
 
-    val ranking = HandRanking.withName(this.getClass().getSimpleName())
+    val ranking = HandRanking withName this.getClass.getSimpleName
   }
 
   object HandRanking extends Enumeration {
@@ -121,5 +131,4 @@ package object hand {
   class OnePair(implicit cards: Cards) extends Hand(cards)
 
   class HighCard(implicit cards: Cards) extends Hand(cards)
-
 }
