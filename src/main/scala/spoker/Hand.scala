@@ -85,7 +85,7 @@ package object hand {
   }
 
   trait PairAwareness extends GroupAwareness {
-    val numberOfPairs = numberOfGroupsOf(2)_
+    val numberOfPairs = numberOfGroupsOf(2) _
 
     def onePair(implicit cards: Cards) = 1 == numberOfPairs(cards)
 
@@ -112,23 +112,24 @@ package object hand {
       Value
   }
 
-  class RoyalFlush(implicit cards: Cards) extends Hand(cards)
+  private class RoyalFlush(implicit cards: Cards) extends Hand(cards)
 
-  class StraightFlush(implicit cards: Cards) extends Hand(cards)
+  private class StraightFlush(implicit cards: Cards) extends Hand(cards)
 
-  class FourOfAKind(implicit cards: Cards) extends Hand(cards)
+  private class FourOfAKind(implicit cards: Cards) extends Hand(cards)
 
-  class FullHouse(implicit cards: Cards) extends Hand(cards)
+  private class FullHouse(implicit cards: Cards) extends Hand(cards)
 
-  class Flush(implicit cards: Cards) extends Hand(cards)
+  private class Flush(implicit cards: Cards) extends Hand(cards)
 
-  class Straight(implicit cards: Cards) extends Hand(cards)
+  private class Straight(implicit cards: Cards) extends Hand(cards)
 
-  class ThreeOfAKind(implicit cards: Cards) extends Hand(cards)
+  private class ThreeOfAKind(implicit cards: Cards) extends Hand(cards)
 
-  class TwoPair(implicit cards: Cards) extends Hand(cards)
+  private class TwoPair(implicit cards: Cards) extends Hand(cards)
 
-  class OnePair(implicit cards: Cards) extends Hand(cards)
+  private class OnePair(implicit cards: Cards) extends Hand(cards)
 
-  class HighCard(implicit cards: Cards) extends Hand(cards)
+  private class HighCard(implicit cards: Cards) extends Hand(cards)
+
 }
