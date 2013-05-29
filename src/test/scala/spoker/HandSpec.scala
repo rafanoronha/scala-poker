@@ -11,48 +11,134 @@ import org.scalatest.matchers.ShouldMatchers
 class HandSpec extends FunSpec with ShouldMatchers {
 
   it("should understand royal flush") {
-    Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs)))
-      .ranking should be(RoyalFlush)
-  }
-  it("should understand a hand irrespective of order of the cards") {
-    Hand(Seq((Ace, Clubs), (Queen, Clubs), (King, Clubs), (Ten, Clubs), (Jack, Clubs)))
-      .ranking should be(RoyalFlush)
+    val cards = (Nine, Clubs) ::(Ace, Hearths) ::(King, Clubs) ::
+      (Ace, Clubs) ::(Jack, Clubs) ::(Queen, Clubs) ::(Ten, Clubs) :: Nil
+
+    val five = (Ace, Clubs) ::(King, Clubs) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
+
+    Hand(cards) should have(
+      'ranking(RoyalFlush),
+      'cards(five),
+      'matched(five)
+    )
   }
   it("should understand straight flush") {
-    Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds)))
-      .ranking should be(StraightFlush)
+    val cards = (Seven, Diamonds) ::(Nine, Diamonds) ::(Ace, Spades) ::
+      (Eight, Diamonds) ::(Ten, Diamonds) ::(Six, Diamonds) ::(Five, Diamonds) :: Nil
+
+    val five = (Ten, Diamonds) ::(Nine, Diamonds) ::(Eight, Diamonds) ::(Seven, Diamonds) ::(Six, Diamonds) :: Nil
+
+    Hand(cards) should have(
+      'ranking(StraightFlush),
+      'cards(five),
+      'matched(five)
+    )
   }
   it("should understand four of a kind") {
-    Hand(Seq((Ace, Spades), (Ace, Hearths), (Ace, Clubs), (Ace, Diamonds), (Three, Clubs)))
-      .ranking should be(FourOfAKind)
+    val cards = (Four, Spades) ::(Ace, Spades) ::(Ace, Hearths) ::
+      (Two, Spades) ::(Ace, Clubs) ::(Ace, Diamonds) ::(Three, Clubs) :: Nil
+
+    val matched = (Ace, Spades) ::(Ace, Hearths) ::(Ace, Clubs) ::(Ace, Diamonds) :: Nil
+    val kicker = (Four, Spades)
+    val five = matched :+ kicker
+
+    Hand(cards) should have(
+      'ranking(FourOfAKind),
+      'cards(five),
+      'matched(matched)
+    )
   }
   it("should understand full house") {
-    Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds)))
-      .ranking should be(FullHouse)
+    val cards = (Three, Spades) ::(Nine, Clubs) ::(Ace, Hearths) ::
+      (Three, Hearths) ::(Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+
+    val five = (Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) ::(Three, Spades) ::(Three, Hearths) :: Nil
+
+    Hand(cards) should have(
+      'ranking(FullHouse),
+      'cards(five),
+      'matched(five)
+    )
   }
   it("should understand flush") {
-    Hand(Seq((Seven, Hearths), (Queen, Hearths), (Nine, Hearths), (Two, Hearths), (Five, Hearths)))
-      .ranking should be(Flush)
+    val cards = (Seven, Hearths) ::(Queen, Hearths) ::(Ace, Spades) ::
+      (Ace, Hearths) ::(Nine, Hearths) ::(Two, Hearths) ::(Five, Hearths) :: Nil
+
+    val five = (Ace, Hearths) ::(Queen, Hearths) ::(Nine, Hearths) ::(Seven, Hearths) ::(Five, Hearths) :: Nil
+
+    Hand(cards) should have(
+      'ranking(Flush),
+      'cards(five),
+      'matched(five)
+    )
   }
   it("should understand broadway straight") {
-    Hand(Seq((Ace, Spades), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs)))
-      .ranking should be(Straight)
+    val cards = (Ace, Spades) ::(King, Clubs) ::(Four, Hearths) ::
+      (Four, Spades) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
+
+    val five = (Ace, Spades) ::(King, Clubs) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
+
+    Hand(cards) should have(
+      'ranking(Straight),
+      'cards(five),
+      'matched(five)
+    )
   }
   it("should understand three of a kind") {
-    Hand(Seq((Three, Spades), (Three, Hearths), (Queen, Hearths), (Ace, Diamonds), (Three, Clubs)))
-      .ranking should be(ThreeOfAKind)
+    val cards = (Nine, Diamonds) ::(Three, Spades) ::(Three, Hearths) ::
+      (Queen, Hearths) ::(Ace, Diamonds) ::(Three, Clubs) ::(Five, Clubs) :: Nil
+
+    val matched = (Three, Spades) ::(Three, Hearths) ::(Three, Clubs) :: Nil
+    val kickers = (Ace, Diamonds) ::(Queen, Hearths) :: Nil
+    val five = matched ++ kickers
+
+    Hand(cards) should have(
+      'ranking(ThreeOfAKind),
+      'cards(five),
+      'matched(matched)
+    )
   }
   it("should understand two pair") {
-    Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds)))
-      .ranking should be(TwoPair)
+    val cards = (Jack, Hearths) ::(Eight, Hearths) ::(Three, Spades) ::
+      (Three, Hearths) ::(Five, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+
+    val matched = (Three, Spades) ::(Three, Hearths) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+    val kicker = (Jack, Hearths)
+    val five = matched :+ kicker
+
+    Hand(cards) should have(
+      'ranking(TwoPair),
+      'cards(five),
+      'matched(matched)
+    )
   }
   it("should understand one pair") {
-    Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds)))
-      .ranking should be(OnePair)
+    val cards = (Three, Spades) ::(Four, Spades) ::(Five, Spades) ::
+      (Six, Clubs) ::(Six, Diamonds) ::(Nine, Diamonds) ::(Ten, Diamonds) :: Nil
+
+    val matched = (Six, Clubs) ::(Six, Diamonds) :: Nil
+    val kickers = (Ten, Diamonds) ::(Nine, Diamonds) ::(Five, Spades) :: Nil
+    val five = matched ++ kickers
+
+    Hand(cards) should have(
+      'ranking(OnePair),
+      'cards(five),
+      'matched(matched)
+    )
   }
   it("should understand high card") {
-    Hand(Seq((Ace, Clubs), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds)))
-      .ranking should be(HighCard)
+    val cards = (Ace, Clubs) ::(Seven, Diamonds) ::(Eight, Diamonds) ::
+      (Nine, Diamonds) ::(Ten, Diamonds) ::(King, Spades) ::(Three, Spades) :: Nil
+
+    val matched = Nil
+    val kickers = (Ace, Clubs) ::(King, Spades) ::(Ten, Diamonds) ::(Nine, Diamonds) ::(Eight, Diamonds) :: Nil
+    val five = kickers
+
+    Hand(cards) should have(
+      'ranking(HighCard),
+      'cards(five),
+      'matched(matched)
+    )
   }
   it("should be ranked") {
     val actual = Seq(
