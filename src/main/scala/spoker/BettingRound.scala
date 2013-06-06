@@ -8,15 +8,24 @@ package object betting {
     }
   }
 
-  class BettingRound private(players: Iterator[Player]) {
+  class BettingRound private(players: Iterator[Player], val bettingActionGotPlaced: Boolean = false) {
     val inTurn = players.next()
 
     def place(action: Action) = {
       if (inTurn != action.player) {
         throw new OutOfTurnException
       }
+      if (action.isInstanceOf[Check]) {
+        if (action.player.isInstanceOf[BigBlindPlayer]) {
+          if (bettingActionGotPlaced) {
+            throw new CantCheckException
+          }
+        } else {
+          throw new NonBigBlindCheckException
+        }
+      }
       if (players.hasNext) {
-        new BettingRound(players)
+        new BettingRound(players, bettingActionGotPlaced || action.isInstanceOf[Raise])
       } else {
         this
       }
@@ -27,10 +36,24 @@ package object betting {
 
   class Call(player: Player) extends Action(player)
 
+  class Check(player: Player) extends Action(player)
+
+  class Raise(value: Int, player: Player) extends Action(player)
+
   class Player {
     def call = new Call(this)
+
+    def check = new Check(this)
+
+    def raise(value: Int) = new Raise(value, this)
   }
 
+  class BigBlindPlayer extends Player
+
   class OutOfTurnException extends Exception
+
+  class NonBigBlindCheckException extends Exception
+
+  class CantCheckException extends Exception
 
 }
