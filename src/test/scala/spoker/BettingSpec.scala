@@ -17,9 +17,14 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   }
 
   describe("Players") {
-
     it("should be able to limp in") {
       round.place(smallBlind.call).place(bigBlind.check).place(dealer.call)
+    }
+    it("should be able to fold an initial bet") {
+      round.place(smallBlind.fold)
+    }
+    it("should be able to fold a raised bet") {
+      round.place(smallBlind.raise(10)).place(bigBlind.fold)
     }
   }
   describe("Check") {

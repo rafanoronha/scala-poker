@@ -37,12 +37,16 @@ package object betting {
 
   class Raise(value: Int, player: Player) extends Action(player)
 
+  class Fold(player: Player) extends Action(player)
+
   class Player {
     def call = new Call(this)
 
     def check = new Check(this)
 
     def raise(value: Int) = new Raise(value, this)
+
+    def fold = new Fold(this)
   }
 
   class BigBlindPlayer extends Player
