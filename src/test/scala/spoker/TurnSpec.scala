@@ -7,7 +7,7 @@ import org.scalatest.matchers.ShouldMatchers
 class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   val smallBlind = new Player
-  val bigBlind = new Player
+  val bigBlind = new BigBlindPlayer
   val dealer = new Player
 
   var round: BettingRound = null
