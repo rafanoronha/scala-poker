@@ -3,17 +3,19 @@ package spoker.betting.spec
 import spoker.betting._
 import org.scalatest.{BeforeAndAfter, FunSpec}
 import org.scalatest.matchers.ShouldMatchers
+import spoker.table._
 
 class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
-  val smallBlind = new Player
-  val bigBlind = new BigBlindPlayer
-  val dealer = new Player
+  val smallBlind = new PositionedPlayer(new Player)
+  val bigBlind = new PositionedPlayer(new Player, BigBlind)
+  val dealer = new PositionedPlayer(new Player)
+  val players = smallBlind :: bigBlind :: dealer :: Nil
 
   var round: BettingRound = null
 
   before {
-    round = BettingRound(smallBlind :: bigBlind :: dealer :: Nil)
+    round = BettingRound(players)
   }
 
   describe("Rounds") {
@@ -30,6 +32,7 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       round.hasEnded should be(false)
     }
   }
+
   describe("Players") {
     it("should be able to limp in") {
       round.place(smallBlind.call).place(bigBlind.check).place(dealer.call)

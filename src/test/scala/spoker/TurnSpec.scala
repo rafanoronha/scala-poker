@@ -3,17 +3,19 @@ package spoker.betting.spec
 import spoker.betting._
 import org.scalatest.{BeforeAndAfter, FunSpec}
 import org.scalatest.matchers.ShouldMatchers
+import spoker.table._
 
 class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
-  val smallBlind = new Player
-  val bigBlind = new BigBlindPlayer
-  val dealer = new Player
+  val smallBlind = new PositionedPlayer(new Player)
+  val bigBlind = new PositionedPlayer(new Player, BigBlind)
+  val dealer = new PositionedPlayer(new Player)
+  val players = smallBlind :: bigBlind :: dealer :: Nil
 
   var round: BettingRound = null
 
   before {
-    round = BettingRound(smallBlind :: bigBlind :: dealer :: Nil)
+    round = BettingRound(players)
   }
 
   it("should allow player in turn to place action") {
