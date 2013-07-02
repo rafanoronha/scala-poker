@@ -43,8 +43,7 @@ package object table {
     }
   }
 
-  class Player {
-  }
+  class Player
 
   object Position extends Enumeration {
     val BigBlind, Any = Value

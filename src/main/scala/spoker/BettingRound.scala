@@ -76,22 +76,23 @@ package object betting {
       LinkedHashSet((bettersToAct.toList ++ contenders.diff(better :: Nil)): _*).iterator
     }
 
-    private object OtherThanInTurn {
+    object OtherThanInTurn {
       def unapply(b: Better) = b != inTurn.getOrElse(null)
     }
 
-    private object BigBlind {
+    object BigBlind {
       def unapply(b: Better) = Position.BigBlind == b.position
     }
 
-    private object NonBigBlind {
+    object NonBigBlind {
       def unapply(b: Better) = Position.BigBlind != b.position
     }
 
   }
 
   class Bet(val pot: Pot, val value: Int, val placedBy: Better, val matchedBy: Seq[Better] = Nil) {
-    def isOpen = (playersFromBetters(matchedBy)).toSet != (pot.contenders.diff(placedBy.player :: Nil)).toSet
+    def isOpen = (playersFromBetters(matchedBy)).toSet !=
+      (pot.contenders.diff(placedBy.player :: Nil)).toSet
   }
 
   class Better(val positionedPlayer: PositionedPlayer) {
@@ -125,17 +126,18 @@ package object betting {
 
   class Fold(better: Better) extends Action(better)
 
+  object RoundKind extends Enumeration {
+    val PreFlop, Flop, Turn, River = Value
+  }
+
   class OutOfTurnException extends Exception
 
   class NonBigBlindCheckException extends Exception
 
   class CantCheckException extends Exception
 
-  object RoundKind extends Enumeration {
-    val PreFlop, Flop, Turn, River = Value
-  }
-
-  implicit def betterFromPositionedPlayer(positionedPlayer: PositionedPlayer): Better = new Better(positionedPlayer)
+  implicit def betterFromPositionedPlayer(positionedPlayer: PositionedPlayer): Better =
+    new Better(positionedPlayer)
 
   implicit def bettersFromPositionedPlayers(positionedPlayers: Seq[PositionedPlayer]): Seq[Better] =
     positionedPlayers map betterFromPositionedPlayer

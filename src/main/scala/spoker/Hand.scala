@@ -119,15 +119,19 @@ package object hand {
       _.head.rank
     }
 
+  object HandRanking extends Enumeration {
+    val HighCard, OnePair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush =
+      Value
+  }
+
   sealed abstract class Hand(var c: Cards, var m: Cards) extends Ordered[Hand] {
     val cards = c.take(5)
     val matched = m.take(5)
+    val ranking = HandRanking withName this.getClass.getSimpleName
 
     def this(cards: Cards) = this(cards, cards)
 
     def compare(that: Hand): Int = this.ranking.compareTo(that.ranking)
-
-    val ranking = HandRanking withName this.getClass.getSimpleName
   }
 
   private class RoyalFlush(cards: Cards) extends Hand(cards)
@@ -152,10 +156,5 @@ package object hand {
   private class OnePair(matched: Cards, kickers: Cards) extends Hand(matched ++ kickers, matched)
 
   private class HighCard(kickers: Cards) extends Hand(kickers, Nil)
-
-  object HandRanking extends Enumeration {
-    val HighCard, OnePair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush =
-      Value
-  }
 
 }
