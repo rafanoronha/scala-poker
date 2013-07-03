@@ -23,6 +23,18 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
         table.nextRound
       } should produce[UnclosedRoundException]
     }
+    it("should handle the river as the final betting round")(pending)
+    it("should not open next hand before closing current one")(pending)
+  }
+  describe("Showdown") {
+    it("should only take place after the river")(pending)
+  }
+  describe("Pot") {
+    it("should be won by best showdown rank owner")(pending)
+    it("should be won by unmatched bet owner")(pending)
+    it("should collect the blinds")(pending)
+    it("should collect all played stakes")(pending)
+    it("should grant all collected value to the hand's winner")(pending)
   }
 
   private def playNextRound = {
