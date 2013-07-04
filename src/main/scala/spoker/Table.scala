@@ -1,6 +1,8 @@
 package spoker
 
 import spoker.betting._
+import spoker.betting.RoundKind.River
+import scala.util.{Failure, Success, Try}
 
 package object table {
 
@@ -10,22 +12,30 @@ package object table {
 
   class Table private(
                        private val players: Seq[Player],
-                       private val currentRound: Option[BettingRound]) {
+                       val currentRound: Option[BettingRound]) {
 
-    def newHand = this
+    def newHand = new Table(players, Some(BettingRound(positionedPlayers(players), RoundKind.PreFlop)))
 
     def nextRound = {
-      if (currentRound.isDefined && !currentRound.get.hasEnded) {
-        throw new UnclosedRoundException
+      object UnclosedRound {
+        def unapply(round: Some[BettingRound]) = round.isDefined && !round.get.hasEnded
       }
-      val (kind, betters) = currentRound match {
-        case (Some(it)) => (RoundKind(1 + it.kind.id), playersFromBetters(it.betters) filter {
+      object RiverRound {
+        def unapply(round: Option[BettingRound]) = round.isDefined && River == round.get.kind
+      }
+      Try(currentRound match {
+        case UnclosedRound() => throw new UnclosedRoundException
+        case RiverRound() => throw new NoMoreRoundsException
+        case (Some(it)) => (playersFromBetters(it.betters) filter {
           it.contenders contains _
-        })
-        case (None) => (RoundKind.PreFlop, players)
+        }, RoundKind(1 + it.kind.id))
+      }) match {
+        case Success((betters, kind)) => {
+          val round = BettingRound(positionedPlayers(betters), kind)
+          new Table(players, Some(round))
+        }
+        case Failure(e) => throw e
       }
-      val round = BettingRound(positionedPlayers(betters), kind)
-      new Table(players, Some(round))
     }
 
     def showdown = Unit
@@ -58,5 +68,7 @@ package object table {
   }
 
   class UnclosedRoundException extends Exception
+
+  class NoMoreRoundsException extends Exception
 
 }
