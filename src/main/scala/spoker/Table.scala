@@ -3,6 +3,7 @@ package spoker
 import spoker.betting._
 import spoker.betting.RoundKind.River
 import scala.util.{Failure, Success, Try}
+import spoker.stack.StackHolder
 
 package object table {
 
@@ -26,9 +27,8 @@ package object table {
       Try(currentRound match {
         case UnclosedRound() => throw new UnclosedRoundException
         case RiverRound() => throw new NoMoreRoundsException
-        case (Some(it)) => (playersFromBetters(it.betters) filter {
-          it.contenders contains _
-        }, RoundKind(1 + it.kind.id))
+        case (Some(it)) => (it.betters.filter(it.contenders.contains(_)
+        ), RoundKind(1 + it.kind.id))
       }) match {
         case Success((betters, kind)) => {
           val round = BettingRound(positionedPlayers(betters), kind)
@@ -40,20 +40,45 @@ package object table {
 
     def showdown = Unit
 
-    def betters = currentRound match {
-      case (Some(it)) => it.betters
+    def betters: Seq[Better] = currentRound match {
+      case (Some(it)) =>
+        if (winner.isDefined) {
+          it.betters.updated(
+            it.betters.indexOf(winner.get),
+            winner.get.collect(it.pot.stack))
+        } else it.betters
       case _ => Nil
+    }
+
+    def winner = currentRound match {
+      case (Some(it)) =>
+        if (it.contenders.tail.isEmpty) Some(it.contenders.head)
+        else None
+      case _ => None
     }
 
     def place(a: Action) = new Table(players, Some(currentRound.get.place(a)))
 
     private def positionedPlayers(players: Seq[Player]) = players match {
+      case Nil => Nil
       case (sb :: bb :: others) =>
-        new PositionedPlayer(sb) :: new PositionedPlayer(bb, BigBlind) :: others.map(new PositionedPlayer(_))
+        new PositionedPlayer(sb) :: new PositionedPlayer(bb,
+          BigBlind) :: others.map(new PositionedPlayer(_))
     }
   }
 
-  class Player
+  case class Player(name: String, stack: Int = 50) extends StackHolder[Player] {
+    def collect(stack: Int) = copy(stack = this.stack + stack)
+
+    def submit(stack: Int) = copy(stack = this.stack - stack)
+
+    override def equals(that: Any) = that match {
+      case p: Player => this.name == p.name
+      case _ => false
+    }
+
+    override def hashCode = name.##
+  }
 
   object Position extends Enumeration {
     val BigBlind, Any = Value
@@ -61,10 +86,16 @@ package object table {
 
   val BigBlind = Position.BigBlind
 
-  class PositionedPlayer(val player: Player, val position: Position.Value = Position.Any)
+  class PositionedPlayer(p: => Player, val position: Position.Value = Position.Any)
+    extends StackHolder[PositionedPlayer] {
 
-  class Pot(val contenders: Seq[Player]) {
-    def gaveUp = (player: Player) => new Pot(contenders.diff(player :: Nil))
+    val stack = player.stack
+
+    def player = p
+
+    def collect(stack: Int) = new PositionedPlayer(player.collect(stack), position)
+
+    def submit(stack: Int) = new PositionedPlayer(player.submit(stack), position)
   }
 
   class UnclosedRoundException extends Exception

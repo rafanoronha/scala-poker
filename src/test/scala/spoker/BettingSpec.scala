@@ -7,9 +7,9 @@ import spoker.table._
 
 class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
-  val smallBlind = new PositionedPlayer(new Player)
-  val bigBlind = new PositionedPlayer(new Player, BigBlind)
-  val dealer = new PositionedPlayer(new Player)
+  val smallBlind = new PositionedPlayer(new Player("p1"))
+  val bigBlind = new PositionedPlayer(new Player("p2"), BigBlind)
+  val dealer = new PositionedPlayer(new Player("p3"))
   val players = smallBlind :: bigBlind :: dealer :: Nil
 
   var round: BettingRound = null
@@ -20,7 +20,7 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   describe("Rounds") {
     it("should end when all players acted and no open bet exist") {
-      round = round.place(smallBlind.raise(10)).place(bigBlind.fold).place(dealer.call)
+      round = round.place(smallBlind.raise(10)).place(bigBlind.call).place(dealer.fold)
       round.hasEnded should be(true)
     }
     it("should end when a bet is not matched") {
