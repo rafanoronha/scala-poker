@@ -41,11 +41,11 @@ package object betting {
 
     val contenders = pot.contenders
 
-    def place(action: Action) = Try((action, action.better, currentBet.placedBy) match {
+    def place(ba: BetterAction) = Try((ba.action, ba.better, currentBet.placedBy) match {
       case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
-      case (_: Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
-      case (_: Check, _, OtherThanInTurn()) => throw new CantCheckException
-      case (_: Check, _, BigBlind()) => (None, None, None, None)
+      case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
+      case (Check, _, OtherThanInTurn()) => throw new CantCheckException
+      case (Check, _, BigBlind()) => (None, None, None, None)
       case (raise: Raise, placedBy, _) => {
         val (updatedBetter, updatedPot) = MoveStack(raise.value - currentBet.value, from = placedBy, to = pot)
         (
@@ -54,7 +54,7 @@ package object betting {
           Some(Bet(updatedPot, raise.value, updatedBetter)),
           Some(newBetContenders(updatedBetter)))
       }
-      case (_: Fold, player, _) => {
+      case (Fold, player, _) => {
         val updatedPot = pot gaveUp player
         (
           None,
@@ -62,7 +62,7 @@ package object betting {
           Some(currentBet.copy(updatedPot)),
           None)
       }
-      case (_: Call, player, _) => {
+      case (Call, player, _) => {
         val (updatedBetter, updatedPot) = MoveStack(currentBet.value, from = player, to = pot)
         (
           Some(betters.updated(betters.indexOf(player), updatedBetter)),
@@ -114,13 +114,13 @@ package object betting {
 
     def submit(stack: Int) = copy(positionedPlayer.submit(stack))
 
-    def call = new Call(this)
+    def call = BetterAction(Call, this)
 
-    def check = new Check(this)
+    def check = BetterAction(Check, this)
 
-    def raise(value: Int) = new Raise(value, this)
+    def raise(value: Int) = BetterAction(Raise(value), this)
 
-    def fold = new Fold(this)
+    def fold = BetterAction(Fold, this)
 
     def player: Player = positionedPlayer.player
 
@@ -143,16 +143,19 @@ package object betting {
     def gaveUp(better: Better) = copy(contenders = contenders.diff(better :: Nil))
   }
 
+  sealed trait Action
 
-  sealed abstract class Action(val better: Better)
+  object Call extends Action
 
-  class Call(better: Better) extends Action(better)
+  object Check extends Action
 
-  class Check(better: Better) extends Action(better)
+  object Fold extends Action
 
-  class Raise(val value: Int, better: Better) extends Action(better)
+  case class Raise(value: Int) extends Action
 
-  class Fold(better: Better) extends Action(better)
+  case class BetterAction(action: Action, better: Better)
+
+  type BetterActionTuple = (Action, Better)
 
   object RoundKind extends Enumeration {
     val PreFlop, Flop, Turn, River = Value
@@ -175,5 +178,7 @@ package object betting {
   }
 
   implicit def playerFromBetter(better: Better): Player = better.player
+
+  implicit def fromTuple(tuple: BetterActionTuple): BetterAction = BetterAction(tuple._1, tuple._2)
 
 }

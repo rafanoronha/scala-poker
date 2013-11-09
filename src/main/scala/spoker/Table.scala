@@ -57,7 +57,7 @@ package object table {
       case _ => None
     }
 
-    def place(a: Action) = new Table(players, Some(currentRound.get.place(a)))
+    def place(ba: BetterAction) = new Table(players, Some(currentRound.get.place(ba)))
 
     private def positionedPlayers(players: Seq[Player]) = players match {
       case Nil => Nil
