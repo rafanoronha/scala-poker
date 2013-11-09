@@ -108,19 +108,24 @@ package object betting {
   }
 
   case class Better(positionedPlayer: PositionedPlayer) extends StackHolder[Better] {
+
     val stack = player.stack
+
+    lazy val myAction = BetterAction(this)
+
+    def myActionIs(a: Action) = myAction(a)
+
+    def call = myActionIs(Call)
+
+    def check = myActionIs(Check)
+
+    def raise(value: Int) = myActionIs(Raise(value))
+
+    def fold = myActionIs(Fold)
 
     def collect(stack: Int) = copy(positionedPlayer.collect(stack))
 
     def submit(stack: Int) = copy(positionedPlayer.submit(stack))
-
-    def call = BetterAction(Call, this)
-
-    def check = BetterAction(Check, this)
-
-    def raise(value: Int) = BetterAction(Raise(value), this)
-
-    def fold = BetterAction(Fold, this)
 
     def player: Player = positionedPlayer.player
 
@@ -152,6 +157,12 @@ package object betting {
   object Fold extends Action
 
   case class Raise(value: Int) extends Action
+
+  object BetterAction {
+    def apply(better: Better) = {
+      (a: Action) => new BetterAction(a, better)
+    }
+  }
 
   case class BetterAction(action: Action, better: Better)
 
