@@ -46,12 +46,12 @@ package object betting {
       case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
       case (Check, _, OtherThanInTurn()) => throw new CantCheckException
       case (Check, _, BigBlind()) => (None, None, None, None)
-      case (raise: Raise, placedBy, _) => {
-        val (updatedBetter, updatedPot) = MoveStack(raise.value - currentBet.value, from = placedBy, to = pot)
+      case (Raise(value), placedBy, _) => {
+        val (updatedBetter, updatedPot) = MoveStack(value - currentBet.value, from = placedBy, to = pot)
         (
           Some(betters.updated(betters.indexOf(placedBy), updatedBetter)),
           Some(updatedPot),
-          Some(Bet(updatedPot, raise.value, updatedBetter)),
+          Some(Bet(updatedPot, value, updatedBetter)),
           Some(newBetContenders(updatedBetter)))
       }
       case (Fold, player, _) => {
