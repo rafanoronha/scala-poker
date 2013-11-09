@@ -19,8 +19,7 @@ package object betting {
         betters,
         pot,
         Some(bettersToAct.next()),
-        bettersToAct,
-        Bet(pot, 2, bigBlind))
+        Bet(pot = pot, value = 2, placedBy = bigBlind, bettersToAct = bettersToAct))
     }
   }
 
@@ -29,12 +28,11 @@ package object betting {
                               val betters: Seq[Better],
                               val pot: Pot,
                               private val inTurn: Option[Better],
-                              private val bettersToAct: Iterator[Better],
                               private val currentBet: Bet
                               ) {
     val hasEnded = (1 == pot.contenders.size) || !(currentBet isOpen)
 
-    val nextInTurn = Try(bettersToAct next) match {
+    val nextInTurn = Try(currentBet.bettersToAct.next) match {
       case Success(p) => Some(p)
       case Failure(_) => None
     }
@@ -45,47 +43,44 @@ package object betting {
       case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
       case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
       case (Check, _, OtherThanInTurn()) => throw new CantCheckException
-      case (Check, _, BigBlind()) => (None, None, None, None)
+      case (Check, _, BigBlind()) => (None, None, None)
       case (Raise(value), placedBy, _) => {
         val (updatedBetter, updatedPot) = MoveStack(value - currentBet.value, from = placedBy, to = pot)
-        (
-          Some(betters.updated(betters.indexOf(placedBy), updatedBetter)),
+        (Some(betters.updated(betters.indexOf(placedBy), updatedBetter)),
           Some(updatedPot),
-          Some(Bet(updatedPot, value, updatedBetter)),
-          Some(newBetContenders(updatedBetter)))
+          Some(Bet(
+            pot = updatedPot,
+            value = value,
+            placedBy = updatedBetter,
+            bettersToAct = newBetContenders(updatedBetter))))
       }
       case (Fold, player, _) => {
         val updatedPot = pot gaveUp player
-        (
-          None,
+        (None,
           Some(updatedPot),
-          Some(currentBet.copy(updatedPot)),
-          None)
+          Some(currentBet.copy(updatedPot)))
       }
       case (Call, player, _) => {
         val (updatedBetter, updatedPot) = MoveStack(currentBet.value, from = player, to = pot)
-        (
-          Some(betters.updated(betters.indexOf(player), updatedBetter)),
+        (Some(betters.updated(betters.indexOf(player), updatedBetter)),
           Some(updatedPot),
           Some(currentBet.copy(
             pot = updatedPot,
-            matchedBy = updatedBetter +: currentBet.matchedBy)),
-          None)
+            matchedBy = updatedBetter +: currentBet.matchedBy)))
       }
     }) match {
-      case Success((updatedBetters, updatedPot, updatedBet, updatedBettersToAct)) =>
+      case Success((updatedBetters, updatedPot, updatedBet)) =>
         new BettingRound(
           kind,
           updatedBetters.getOrElse(betters),
           updatedPot.getOrElse(pot),
           nextInTurn,
-          updatedBettersToAct.getOrElse(bettersToAct),
           updatedBet.getOrElse(currentBet))
       case Failure(e) => throw e
     }
 
     private def newBetContenders(better: Better): Iterator[Better] =
-      LinkedHashSet((bettersToAct.toList ++ contenders.diff(better :: Nil)): _*).iterator
+      LinkedHashSet((currentBet.bettersToAct.toList ++ contenders.diff(better :: Nil)): _*).iterator
 
     object OtherThanInTurn {
       def unapply(b: Better) = b != inTurn.getOrElse(null)
@@ -101,10 +96,15 @@ package object betting {
 
   }
 
-  case class Bet(pot: Pot, value: Int, placedBy: Better, matchedBy: Seq[Better] = Nil) {
+  case class Bet(
+                  pot: Pot,
+                  value: Int,
+                  placedBy: Better,
+                  bettersToAct: Iterator[Better],
+                  matchedBy: Seq[Better] = Nil
+                  ) {
     def isOpen = matchedBy.toSet !=
       (pot.contenders.diff(placedBy :: Nil)).toSet
-
   }
 
   case class Better(positionedPlayer: PositionedPlayer) extends StackHolder[Better] {
