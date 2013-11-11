@@ -4,22 +4,29 @@ import scala.collection.mutable.LinkedHashSet
 import scala.util.{Failure, Success, Try}
 import spoker.table._
 import spoker.stack.{MoveStack, StackHolder}
+import spoker.blinds.{Blinds, BlindsGathering}
 
 package object betting {
 
   object BettingRound {
-    def apply(betters: Seq[Better], kind: RoundKind.Value = RoundKind.PreFlop) = {
-      val bigBlind = betters.find {
+    def apply(
+               bs: Seq[Better],
+               kind: RoundKind.Value = RoundKind.PreFlop,
+               blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)) = {
+      val (p, bigBlind) = Pot(contenders = bs, blinds = blinds).collectBigBlindFrom(bs.find {
         BigBlind == _.position
-      }.get
+      }.get)
+      val (pot, smallBlind) = p.collectSmallBlindFrom(bs.find {
+        SmallBlind == _.position
+      }.get)
+      val betters = bs.updated(bs.indexOf(bigBlind), bigBlind).updated(bs.indexOf(smallBlind), smallBlind)
       val bettersToAct = betters.iterator
-      val pot = Pot(betters)
       new BettingRound(
         kind,
         betters,
         pot,
         Some(bettersToAct.next()),
-        Bet(pot = pot, value = 2, placedBy = bigBlind, bettersToAct = bettersToAct))
+        Bet(pot = pot, value = blinds.bigBlind, placedBy = bigBlind, bettersToAct = bettersToAct))
     }
   }
 
@@ -39,6 +46,7 @@ package object betting {
 
     val contenders = pot.contenders
 
+    // TODO: gather 2nd half of sb for all sb's actions but fold
     def place(ba: BetterAction) = Try((ba.action, ba.better, currentBet.placedBy) match {
       case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
       case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
@@ -88,6 +96,10 @@ package object betting {
 
     object BigBlind {
       def unapply(b: Better) = Position.BigBlind == b.position
+    }
+
+    object SmallBlind {
+      def unapply(b: Better) = Position.SmallBlind == b.position
     }
 
     object NonBigBlind {
@@ -140,7 +152,7 @@ package object betting {
     override def hashCode = player.##
   }
 
-  case class Pot(contenders: Seq[Better], stack: Int = 0) extends StackHolder[Pot] {
+  case class Pot(contenders: Seq[Better], stack: Int = 0, blinds: Blinds) extends BlindsGathering[Pot] {
     def collect(stack: Int) = copy(stack = this.stack + stack)
 
     def submit(stack: Int) = copy(stack = this.stack - stack)

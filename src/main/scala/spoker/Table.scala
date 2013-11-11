@@ -7,6 +7,9 @@ import spoker.stack.StackHolder
 
 package object table {
 
+  val SmallBlind = Position.SmallBlind
+  val BigBlind = Position.BigBlind
+
   object Table {
     def apply(players: Seq[Player]) = new Table(players, None)
   }
@@ -57,12 +60,17 @@ package object table {
       case _ => None
     }
 
+    def pot = currentRound match {
+      case (Some(it)) => Some(it.pot)
+      case _ => None
+    }
+
     def place(ba: BetterAction) = new Table(players, Some(currentRound.get.place(ba)))
 
     private def positionedPlayers(players: Seq[Player]) = players match {
       case Nil => Nil
       case (sb :: bb :: others) =>
-        new PositionedPlayer(sb) :: new PositionedPlayer(bb,
+        new PositionedPlayer(sb, SmallBlind) :: new PositionedPlayer(bb,
           BigBlind) :: others.map(new PositionedPlayer(_))
     }
   }
@@ -81,10 +89,8 @@ package object table {
   }
 
   object Position extends Enumeration {
-    val BigBlind, Any = Value
+    val BigBlind, SmallBlind, Any = Value
   }
-
-  val BigBlind = Position.BigBlind
 
   class PositionedPlayer(p: => Player, val position: Position.Value = Position.Any)
     extends StackHolder[PositionedPlayer] {

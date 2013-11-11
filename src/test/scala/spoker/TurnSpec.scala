@@ -7,7 +7,7 @@ import spoker.table._
 
 class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
-  val smallBlind = new PositionedPlayer(new Player("p1"))
+  val smallBlind = new PositionedPlayer(new Player("p1"), SmallBlind)
   val bigBlind = new PositionedPlayer(new Player("p2"), BigBlind)
   val dealer = new PositionedPlayer(new Player("p3"))
   val players = smallBlind :: bigBlind :: dealer :: Nil
