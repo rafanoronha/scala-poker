@@ -2,19 +2,28 @@ package spoker
 
 package object stack {
 
-  trait StackHolder[T] {
+  type UpdatedStackReport = (StackHolder, Int)
+
+  trait StackHolderChief {
+    def report(data: UpdatedStackReport): Unit
+  }
+
+  trait StackHolder {
 
     val stack: Int
 
-    def collect(stack: Int): T
+    val chief: StackHolderChief
 
-    def submit(stack: Int): T
+    def collect(stack: Int): Unit = reportToChief(this.stack + stack)
+
+    def submit(stack: Int): Unit = reportToChief(this.stack - stack)
+
+    private def reportToChief(x: Int): Unit = chief.report((this, x))
 
   }
 
   object MoveStack {
-    def apply[A <: StackHolder[A], B <: StackHolder[B]](stack: Int, from: A, to: B): (A, B) =
-      (from.submit(stack), to.collect(stack))
+    def apply(stack: Int, from: StackHolder, to: StackHolder): Unit = (from.submit(stack), to.collect(stack))
   }
 
 }

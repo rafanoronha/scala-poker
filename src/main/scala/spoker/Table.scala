@@ -3,22 +3,67 @@ package spoker
 import spoker.betting._
 import spoker.betting.RoundKind.River
 import scala.util.{Failure, Success, Try}
-import spoker.stack.StackHolder
+import spoker.stack.{MoveStack, StackHolder, StackHolderChief, UpdatedStackReport}
+import spoker.blinds.{BlindsGathering, Blinds}
 
 package object table {
 
   val SmallBlind = Position.SmallBlind
   val BigBlind = Position.BigBlind
 
-  object Table {
-    def apply(players: Seq[Player]) = new Table(players, None)
+  trait StackManagement extends StackHolderChief {
+    def updatePotStack(pot: Pot, updatedStack: Int): Unit
+
+    def updateBetterStack(better: PositionedPlayer, updatedStack: Int): Unit
+
+    def report(data: UpdatedStackReport): Unit = data match {
+      case (p: Pot, updatedStack) => updatePotStack(p, updatedStack)
+      case (pp: PositionedPlayer, updatedStack) => updateBetterStack(pp, updatedStack)
+    }
   }
 
-  class Table private(
-                       private val players: Seq[Player],
-                       val currentRound: Option[BettingRound]) {
+  object Table {
+    def apply(
+               players: Seq[Player],
+               blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)): Table =
+      new Table(
+        players = players,
+        currentRound = None,
+        p = Pot(
+          blinds = blinds
+        ),
+        bsOption = None
+      )
+  }
 
-    def newHand = new Table(players, Some(BettingRound(positionedPlayers(players), RoundKind.PreFlop)))
+  class Table(
+               val players: Seq[Player],
+               var currentRound: Option[BettingRound],
+               p: Pot,
+               bsOption: Option[Seq[PositionedPlayer]]) extends StackManagement {
+
+    var pot: Pot = p.withTable(this)
+    var bs: Option[Seq[PositionedPlayer]] = bsOption
+
+    def updatePotStack(pot: Pot, updatedStack: Int): Unit =
+      this.pot = this.pot.copy(stack = updatedStack)
+
+    def updateBetterStack(better: PositionedPlayer, updatedStack: Int): Unit = {
+      val xs = bs.get
+      val i = xs.indexOf(better)
+      this.bs = Some(xs.updated(i, xs(i).copy(stack = updatedStack)))
+    }
+
+    def newHand = {
+      this.bs = Some(positionPlayers(players))
+      this.currentRound = Some(BettingRound.preFlop(
+        bs = bs.get,
+        pot = pot
+      ))
+      this
+    }
+
+    def betters: Seq[PositionedPlayer] = bs.getOrElse(Nil)
 
     def nextRound = {
       object UnclosedRound {
@@ -30,12 +75,19 @@ package object table {
       Try(currentRound match {
         case UnclosedRound() => throw new UnclosedRoundException
         case RiverRound() => throw new NoMoreRoundsException
-        case (Some(it)) => (it.betters.filter(it.contenders.contains(_)
-        ), RoundKind(1 + it.kind.id))
+        case (Some(it)) => RoundKind(1 + it.kind.id)
       }) match {
-        case Success((betters, kind)) => {
-          val round = BettingRound(positionedPlayers(betters), kind)
-          new Table(players, Some(round))
+        case Success(kind) => {
+          val round = BettingRound.nextRound(
+            kind = kind,
+            bs = this.betters,
+            pot = this.pot,
+            currentBet = this.currentRound.get.currentBet.copy(
+              bettersToAct = bettersFromPositionedPlayers(this.betters).iterator
+            )
+          )
+          this.currentRound = Some(round)
+          this
         }
         case Failure(e) => throw e
       }
@@ -43,65 +95,80 @@ package object table {
 
     def showdown = Unit
 
-    def betters: Seq[Better] = currentRound match {
-      case (Some(it)) =>
-        if (winner.isDefined) {
-          it.betters.updated(
-            it.betters.indexOf(winner.get),
-            winner.get.collect(it.pot.stack))
-        } else it.betters
-      case _ => Nil
+    def place(ba: BetterAction): Table = {
+      val current = currentRound.get
+      val bet = current.place(ba)
+      if (ba.action == Fold) {
+        this.bs = Some(this.betters.diff(ba.better :: Nil))
+      }
+      val next = current.copy(
+        bs = this.betters,
+        currentBet = bet
+      )
+      if (1 == this.betters.size) {
+        MoveStack(pot.stack, from = pot, to = this.betters.head)
+      }
+      this.currentRound = Some(next)
+      this
     }
 
-    def winner = currentRound match {
-      case (Some(it)) =>
-        if (it.contenders.tail.isEmpty) Some(it.contenders.head)
-        else None
-      case _ => None
-    }
-
-    def pot = currentRound match {
-      case (Some(it)) => Some(it.pot)
-      case _ => None
-    }
-
-    def place(ba: BetterAction) = new Table(players, Some(currentRound.get.place(ba)))
-
-    private def positionedPlayers(players: Seq[Player]) = players match {
+    private def positionPlayers(players: Seq[Player]) = players match {
       case Nil => Nil
       case (sb :: bb :: others) =>
-        new PositionedPlayer(sb, SmallBlind) :: new PositionedPlayer(bb,
-          BigBlind) :: others.map(new PositionedPlayer(_))
+        new PositionedPlayer(sb, this, SmallBlind) ::
+          new PositionedPlayer(bb, this, BigBlind) ::
+          others.map(p => new PositionedPlayer(p, this))
     }
   }
 
-  case class Player(name: String, stack: Int = 50) extends StackHolder[Player] {
-    def collect(stack: Int) = copy(stack = this.stack + stack)
-
-    def submit(stack: Int) = copy(stack = this.stack - stack)
-
-    override def equals(that: Any) = that match {
-      case p: Player => this.name == p.name
-      case _ => false
-    }
-
-    override def hashCode = name.##
-  }
+  case class Player(name: String)
 
   object Position extends Enumeration {
     val BigBlind, SmallBlind, Any = Value
   }
 
-  class PositionedPlayer(p: => Player, val position: Position.Value = Position.Any)
-    extends StackHolder[PositionedPlayer] {
+  case class Pot(
+                  stack: Int = 0,
+                  blinds: Blinds,
+                  var table: Table = null) extends BlindsGathering {
+    def withTable(t: Table): Pot = {
+      table = t
+      this
+    }
 
-    val stack = player.stack
+    lazy val chief = table
+  }
 
-    def player = p
+  class PositionedPlayer(
+                          p: Player,
+                          table: Table,
+                          val position: Position.Value = Position.Any,
+                          val stack: Int = 50) extends StackHolder {
 
-    def collect(stack: Int) = new PositionedPlayer(player.collect(stack), position)
+    def copy(
+              p: Player = this.p,
+              table: Table = this.table,
+              position: Position.Value = this.position,
+              stack: Int = this.stack) =
+      new PositionedPlayer(
+        p = p,
+        table = table,
+        position = position,
+        stack = stack
+      )
 
-    def submit(stack: Int) = new PositionedPlayer(player.submit(stack), position)
+    val chief = table
+
+    val playerName = p.name
+
+    def player = table.players.find(playerName == _.name).get
+
+    override def equals(that: Any) = that match {
+      case pp: PositionedPlayer => this.player == pp.player
+    }
+
+    override def hashCode = this.player.##
+
   }
 
   class UnclosedRoundException extends Exception

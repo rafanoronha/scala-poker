@@ -3,95 +3,102 @@ package spoker
 import scala.collection.mutable.LinkedHashSet
 import scala.util.{Failure, Success, Try}
 import spoker.table._
-import spoker.stack.{MoveStack, StackHolder}
-import spoker.blinds.{Blinds, BlindsGathering}
+import spoker.stack.MoveStack
 
 package object betting {
 
   object BettingRound {
-    def apply(
-               bs: Seq[Better],
-               kind: RoundKind.Value = RoundKind.PreFlop,
-               blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)) = {
-      val (p, bigBlind) = Pot(contenders = bs, blinds = blinds).collectBigBlindFrom(bs.find {
+    def preFlop(
+                 bs: => Seq[Better],
+                 pot: => Pot) = {
+      val bb = bs.find {
         BigBlind == _.position
-      }.get)
-      val (pot, smallBlind) = p.collectSmallBlindFrom(bs.find {
+      }.get
+      pot.collectBigBlindFrom(bb)
+      pot.collectSmallBlindFrom(bs.find {
         SmallBlind == _.position
       }.get)
-      val betters = bs.updated(bs.indexOf(bigBlind), bigBlind).updated(bs.indexOf(smallBlind), smallBlind)
-      val bettersToAct = betters.iterator
       new BettingRound(
-        kind,
-        betters,
-        pot,
-        Some(bettersToAct.next()),
-        Bet(pot = pot, value = blinds.bigBlind, placedBy = bigBlind, bettersToAct = bettersToAct))
+        kind = RoundKind.PreFlop,
+        bs = bs,
+        currentBet = Bet(value = pot.blinds.bigBlind, placedBy = bb, bettersToAct = bs.iterator),
+        pot = pot
+      )
+    }
+
+    def nextRound(
+                   kind: RoundKind.Value,
+                   bs: => Seq[Better],
+                   pot: => Pot,
+                   currentBet: Bet) = {
+      new BettingRound(
+        kind = kind,
+        bs = bs,
+        currentBet = currentBet,
+        pot = pot
+      )
     }
   }
 
   class BettingRound private(
                               val kind: RoundKind.Value,
-                              val betters: Seq[Better],
-                              val pot: Pot,
-                              private val inTurn: Option[Better],
-                              private val currentBet: Bet
-                              ) {
-    val hasEnded = (1 == pot.contenders.size) || !(currentBet isOpen)
+                              bs: => Seq[Better],
+                              val currentBet: Bet,
+                              pot: => Pot) {
 
-    val nextInTurn = Try(currentBet.bettersToAct.next) match {
-      case Success(p) => Some(p)
-      case Failure(_) => None
-    }
+    def copy(
+              kind: RoundKind.Value = this.kind,
+              bs: => Seq[Better] = this.betters,
+              currentBet: Bet = this.currentBet,
+              pot: => Pot = this.pot) =
+      new BettingRound(
+        kind = kind,
+        bs = bs,
+        pot = pot,
+        currentBet = currentBet
+      )
 
-    val contenders = pot.contenders
+    val inTurn: Option[Better] = Try(currentBet.bettersToAct.next).map(Some(_)).getOrElse(None)
+
+    val hasEnded = (1 == betters.size) || !betIsOpen
+
+    def betters = bs
+
+    def betIsOpen = currentBet.matchedBy.toSet !=
+      (betters.diff(currentBet.placedBy :: Nil)).toSet
 
     // TODO: gather 2nd half of sb for all sb's actions but fold
-    def place(ba: BetterAction) = Try((ba.action, ba.better, currentBet.placedBy) match {
+    def place(ba: BetterAction): Bet = Try((ba.action, ba.better, currentBet.placedBy) match {
       case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
       case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
       case (Check, _, OtherThanInTurn()) => throw new CantCheckException
-      case (Check, _, BigBlind()) => (None, None, None)
+      case (Check, _, BigBlind()) => None
       case (Raise(value), placedBy, _) => {
-        val (updatedBetter, updatedPot) = MoveStack(value - currentBet.value, from = placedBy, to = pot)
-        (Some(betters.updated(betters.indexOf(placedBy), updatedBetter)),
-          Some(updatedPot),
-          Some(Bet(
-            pot = updatedPot,
-            value = value,
-            placedBy = updatedBetter,
-            bettersToAct = newBetContenders(updatedBetter))))
+        MoveStack(value, from = placedBy, to = pot)
+        Some(Bet(
+          value = value,
+          placedBy = placedBy,
+          bettersToAct = newBetContenders(placedBy)))
       }
-      case (Fold, player, _) => {
-        val updatedPot = pot gaveUp player
-        (None,
-          Some(updatedPot),
-          Some(currentBet.copy(updatedPot)))
-      }
+      case (Fold, player, _) => None
       case (Call, player, _) => {
-        val (updatedBetter, updatedPot) = MoveStack(currentBet.value, from = player, to = pot)
-        (Some(betters.updated(betters.indexOf(player), updatedBetter)),
-          Some(updatedPot),
-          Some(currentBet.copy(
-            pot = updatedPot,
-            matchedBy = updatedBetter +: currentBet.matchedBy)))
+        MoveStack(currentBet.value, from = player, to = pot)
+        Some(currentBet.copy(
+          matchedBy = player +: currentBet.matchedBy))
       }
     }) match {
-      case Success((updatedBetters, updatedPot, updatedBet)) =>
-        new BettingRound(
-          kind,
-          updatedBetters.getOrElse(betters),
-          updatedPot.getOrElse(pot),
-          nextInTurn,
-          updatedBet.getOrElse(currentBet))
+      case Success(updatedBet) => updatedBet.getOrElse(currentBet)
       case Failure(e) => throw e
     }
 
     private def newBetContenders(better: Better): Iterator[Better] =
-      LinkedHashSet((currentBet.bettersToAct.toList ++ contenders.diff(better :: Nil)): _*).iterator
+      LinkedHashSet((currentBet.bettersToAct.toList ++ betters.diff(better :: Nil)): _*).iterator
 
     object OtherThanInTurn {
-      def unapply(b: Better) = b != inTurn.getOrElse(null)
+      def unapply(b: Better) = inTurn match {
+        case Some(x) => b != x
+        case None => true
+      }
     }
 
     object BigBlind {
@@ -109,19 +116,13 @@ package object betting {
   }
 
   case class Bet(
-                  pot: Pot,
                   value: Int,
                   placedBy: Better,
                   bettersToAct: Iterator[Better],
                   matchedBy: Seq[Better] = Nil
-                  ) {
-    def isOpen = matchedBy.toSet !=
-      (pot.contenders.diff(placedBy :: Nil)).toSet
-  }
+                  )
 
-  case class Better(positionedPlayer: PositionedPlayer) extends StackHolder[Better] {
-
-    val stack = player.stack
+  case class Better(positionedPlayer: PositionedPlayer) {
 
     lazy val myAction = BetterAction(this)
 
@@ -135,29 +136,13 @@ package object betting {
 
     def fold = myActionIs(Fold)
 
-    def collect(stack: Int) = copy(positionedPlayer.collect(stack))
-
-    def submit(stack: Int) = copy(positionedPlayer.submit(stack))
-
-    def player: Player = positionedPlayer.player
-
-    def position = positionedPlayer.position
-
     override def equals(that: Any) = that match {
-      case t: Better => this.player == t.player
-      case p: Player => this.player == p
-      case _ => false
+      case b: Better => playerFromBetter(this) == playerFromBetter(b)
+      case pp: PositionedPlayer => playerFromBetter(this) == pp.player
+      case p: Player => playerFromBetter(this) == p
     }
 
-    override def hashCode = player.##
-  }
-
-  case class Pot(contenders: Seq[Better], stack: Int = 0, blinds: Blinds) extends BlindsGathering[Pot] {
-    def collect(stack: Int) = copy(stack = this.stack + stack)
-
-    def submit(stack: Int) = copy(stack = this.stack - stack)
-
-    def gaveUp(better: Better) = copy(contenders = contenders.diff(better :: Nil))
+    override def hashCode = playerFromBetter(this).##
   }
 
   sealed trait Action
@@ -190,6 +175,9 @@ package object betting {
 
   class CantCheckException extends Exception
 
+  implicit def positionedPlayerFroBetter(better: Better): PositionedPlayer =
+    better.positionedPlayer
+
   implicit def betterFromPositionedPlayer(positionedPlayer: PositionedPlayer): Better =
     Better(positionedPlayer)
 
@@ -197,10 +185,10 @@ package object betting {
     positionedPlayers map betterFromPositionedPlayer
 
   implicit def playersFromBetters(betters: Seq[Better]): Seq[Player] = betters map {
-    _.player
+    playerFromBetter(_)
   }
 
-  implicit def playerFromBetter(better: Better): Player = better.player
+  implicit def playerFromBetter(better: Better): Player = better.positionedPlayer.player
 
   implicit def fromTuple(tuple: BetterActionTuple): BetterAction = BetterAction(tuple._1, tuple._2)
 

@@ -6,15 +6,15 @@ package object blinds {
 
   case class Blinds(smallBlind: Int, bigBlind: Int)
 
-  trait BlindsGathering[A] extends StackHolder[A] {
+  trait BlindsGathering extends StackHolder {
 
     val blinds: Blinds
 
-    def collectSmallBlindFrom[B <: StackHolder[B]] = collectBlindFrom[B](blinds.smallBlind) _
+    def collectSmallBlindFrom = collectBlind(blinds.smallBlind) _
 
-    def collectBigBlindFrom[B <: StackHolder[B]] = collectBlindFrom[B](blinds.bigBlind) _
+    def collectBigBlindFrom = collectBlind(blinds.bigBlind) _
 
-    protected def collectBlindFrom[B <: StackHolder[B]](stack: Int)(from: B): (A, B) =
+    private def collectBlind(stack: Int)(from: StackHolder): Unit =
       (this.collect(stack), from.submit(stack))
   }
 
