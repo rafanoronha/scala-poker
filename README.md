@@ -1,4 +1,4 @@
-# spoker
+# Scala Poker
  
 Having fun while coding a brand new open source scala poker library.
   
