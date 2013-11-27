@@ -7,6 +7,8 @@ import spoker.stack.MoveStack
 
 package object betting {
 
+  val PreFlop = RoundKind.PreFlop
+  
   object BettingRound {
     def preFlop(
                  bs: => Seq[Better],
@@ -19,7 +21,7 @@ package object betting {
         SmallBlind == _.position
       }.get)
       new BettingRound(
-        kind = RoundKind.PreFlop,
+        kind = PreFlop,
         bs = bs,
         currentBet = Bet(value = pot.blinds.bigBlind, placedBy = bb, bettersToAct = bs.iterator),
         pot = pot
@@ -67,28 +69,36 @@ package object betting {
     def betIsOpen = currentBet.matchedBy.toSet !=
       (betters.diff(currentBet.placedBy :: Nil)).toSet
 
-    // TODO: gather 2nd half of sb for all sb's actions but fold
-    def place(ba: BetterAction): Bet = Try((ba.action, ba.better, currentBet.placedBy) match {
-      case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
-      case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
-      case (Check, _, OtherThanInTurn()) => throw new CantCheckException
-      case (Check, _, BigBlind()) => None
-      case (Raise(value), placedBy, _) => {
-        MoveStack(value, from = placedBy, to = pot)
-        Some(Bet(
-          value = value,
-          placedBy = placedBy,
-          bettersToAct = newBetContenders(placedBy)))
+    def place(ba: BetterAction): Bet = {
+      val (action, better, placedBy) = (ba.action, ba.better, currentBet.placedBy)
+      (kind, action, better) match {
+        case (PreFlop, OtherThanFold(), SmallBlind()) => {
+          pot.collectSmallBlindFrom(better)
+        }
+        case _ => ()
+      }        
+      Try((action, better, placedBy) match {
+	      case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
+	      case (Check, NonBigBlind(), _) => throw new NonBigBlindCheckException
+	      case (Check, _, OtherThanInTurn()) => throw new CantCheckException
+	      case (Check, _, BigBlind()) => None
+	      case (Raise(value), placedBy, _) => {
+	        MoveStack(value, from = placedBy, to = pot)
+	        Some(Bet(
+	          value = value,
+	          placedBy = placedBy,
+	          bettersToAct = newBetContenders(placedBy)))
+	      }
+	      case (Fold, player, _) => None
+	      case (Call, player, _) => {
+	        MoveStack(currentBet.value, from = player, to = pot)
+	        Some(currentBet.copy(
+	          matchedBy = player +: currentBet.matchedBy))
+	      }
+	    }) match {
+	      case Success(updatedBet) => updatedBet.getOrElse(currentBet)
+	      case Failure(e) => throw e
       }
-      case (Fold, player, _) => None
-      case (Call, player, _) => {
-        MoveStack(currentBet.value, from = player, to = pot)
-        Some(currentBet.copy(
-          matchedBy = player +: currentBet.matchedBy))
-      }
-    }) match {
-      case Success(updatedBet) => updatedBet.getOrElse(currentBet)
-      case Failure(e) => throw e
     }
 
     private def newBetContenders(better: Better): Iterator[Better] =
@@ -113,6 +123,9 @@ package object betting {
       def unapply(b: Better) = Position.BigBlind != b.position
     }
 
+    object OtherThanFold {
+      def unapply(a: Action) = Fold != a
+    }        
   }
 
   case class Bet(

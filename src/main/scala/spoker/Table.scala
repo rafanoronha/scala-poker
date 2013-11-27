@@ -12,10 +12,10 @@ package object table {
   val BigBlind = Position.BigBlind
 
   trait StackManagement extends StackHolderChief {
-    def updatePotStack(pot: Pot, updatedStack: Int): Unit
 
     def updateBetterStack(better: PositionedPlayer, updatedStack: Int): Unit
 
+    def updatePotStack(pot: Pot, updatedStack: Int): Unit
     def report(data: UpdatedStackReport): Unit = data match {
       case (p: Pot, updatedStack) => updatePotStack(p, updatedStack)
       case (pp: PositionedPlayer, updatedStack) => updateBetterStack(pp, updatedStack)
@@ -46,12 +46,12 @@ package object table {
     var bs: Option[Seq[PositionedPlayer]] = bsOption
 
     def updatePotStack(pot: Pot, updatedStack: Int): Unit =
-      this.pot = this.pot.copy(stack = updatedStack)
+      this.pot = this.pot.copy(stack = this.pot.stack + updatedStack)
 
     def updateBetterStack(better: PositionedPlayer, updatedStack: Int): Unit = {
       val xs = bs.get
-      val i = xs.indexOf(better)
-      this.bs = Some(xs.updated(i, xs(i).copy(stack = updatedStack)))
+      val i = xs.indexOf(better)           
+      this.bs = Some(xs.updated(i, xs(i).copy(stack = xs(i).stack + updatedStack)))
     }
 
     def newHand = {

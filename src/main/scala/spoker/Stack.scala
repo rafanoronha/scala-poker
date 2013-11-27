@@ -14,9 +14,9 @@ package object stack {
 
     val chief: StackHolderChief
 
-    def collect(stack: Int): Unit = reportToChief(this.stack + stack)
+    def collect(stack: Int): Unit = reportToChief(+stack)
 
-    def submit(stack: Int): Unit = reportToChief(this.stack - stack)
+    def submit(stack: Int): Unit = reportToChief(-stack)
 
     private def reportToChief(x: Int): Unit = chief.report((this, x))
 
