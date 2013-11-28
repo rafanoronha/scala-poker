@@ -1,24 +1,8 @@
-package spoker
-
-package object cards {
+package object spoker {
 
   type Cards = Seq[Card]
   type CardTuple = (Rank.Value, Suit.Value)
   type CardTuples = Seq[CardTuple]
-
-  class Card(val rank: Rank.Value, val suit: Suit.Value) extends Ordered[Card] {
-    def compare(that: Card): Int = this.rank compare that.rank
-
-    override def equals(that: Any): Boolean = that match {
-      case c: Card => toTuple(this) equals toTuple(c)
-      case t: CardTuple => toTuple(this) equals t
-      case _ => false
-    }
-
-    override def hashCode(): Int = toTuple(this).##
-
-    override def toString = toTuple(this).toString
-  }
 
   object Rank extends Enumeration {
     val Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace = Value
@@ -28,6 +12,8 @@ package object cards {
     val Clubs, Diamonds, Hearths, Spades = Value
   }
 
+  case class Player(name: String)
+
   implicit def fromTuple(tuple: CardTuple) = new Card(tuple._1, tuple._2)
 
   implicit def fromTuples(tuples: CardTuples) = tuples map fromTuple _
@@ -35,4 +21,23 @@ package object cards {
   implicit def toTuple(card: Card) = (card.rank, card.suit)
 
   implicit def toTuples(cards: Cards) = cards map toTuple _
+
+  val Two = Rank.Two
+  val Three = Rank.Three
+  val Four = Rank.Four
+  val Five = Rank.Five
+  val Six = Rank.Six
+  val Seven = Rank.Seven
+  val Eight = Rank.Eight
+  val Nine = Rank.Nine
+  val Ten = Rank.Ten
+  val Jack = Rank.Jack
+  val Queen = Rank.Queen
+  val King = Rank.King
+  val Ace = Rank.Ace
+
+  val Clubs = Suit.Clubs
+  val Diamonds = Suit.Diamonds
+  val Hearths = Suit.Hearths
+  val Spades = Suit.Spades
 }

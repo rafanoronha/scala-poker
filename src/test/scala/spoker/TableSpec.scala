@@ -2,9 +2,10 @@ package spoker.table.spec
 
 import org.scalatest.{BeforeAndAfter, FunSpec}
 import org.scalatest.matchers.ShouldMatchers
-import spoker.table._
-import spoker.betting.RoundKind._
 import org.scalatest.Tag
+
+import spoker._
+import spoker.betting._
 
 class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
@@ -65,7 +66,7 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   }
   describe("Pot") {
     it("should be won by best showdown rank owner")(pending)
-    it("should be won by unmatched bet owner", Tag("wip")) {
+    it("should be won by unmatched bet owner") {
       table = table.place(player1.raise(4)).place(player2.call).place(player3.fold)
         .nextRound.place(player1.raise(8)).place(player2.fold)
       (player1 stack) should be(56)

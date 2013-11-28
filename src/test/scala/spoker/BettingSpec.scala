@@ -1,9 +1,10 @@
 package spoker.betting.spec
 
-import spoker.betting._
 import org.scalatest.{BeforeAndAfter, FunSpec}
 import org.scalatest.matchers.ShouldMatchers
-import spoker.table._
+
+import spoker._
+import spoker.betting._
 
 class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
