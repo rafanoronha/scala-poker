@@ -1,63 +1,50 @@
 package spoker.betting
 
-import scala.util.{Failure, Success, Try}
-import spoker.betting.{BettingRoundExtractors => Is}
-import spoker.betting.stack.{Pot, MoveStack}
+import scala.util.{ Failure, Success, Try }
+import spoker.betting.{ BettingRoundExtractors => Is }
+import spoker.betting.stack.{ Pot, MoveStack }
 import scala.collection.mutable.LinkedHashSet
 
 object BettingRound {
   def preFlop(
-    bs: => Seq[Better],
-    pot: => Pot) = {
-    val bb = bs.find {
+    betters: Seq[Better],
+    pot: Pot) = {
+    val bb = betters.find {
       BigBlind == _.position
     }.get
     pot.collectBigBlindFrom(bb)
-    pot.collectSmallBlindFrom(bs.find {
+    pot.collectSmallBlindFrom(betters.find {
       SmallBlind == _.position
     }.get)
     new BettingRound(
       kind = PreFlop,
-      bs = bs,
-      currentBet = Bet(value = pot.blinds.bigBlind, placedBy = bb, bettersToAct = bs.iterator),
+      betters = betters,
+      currentBet = Bet(value = pot.blinds.bigBlind, placedBy = bb, bettersToAct = betters.iterator),
       pot = pot)
   }
 
   def nextRound(
     kind: RoundKind.Value,
-    bs: => Seq[Better],
-    pot: => Pot,
+    betters: Seq[Better],
+    pot: Pot,
     currentBet: Bet) = {
     new BettingRound(
       kind = kind,
-      bs = bs,
+      betters = betters,
       currentBet = currentBet,
       pot = pot)
   }
 }
 
-class BettingRound private (
-  val kind: RoundKind.Value,
-  bs: => Seq[Better],
-  val currentBet: Bet,
-  pot: => Pot) {
-
-  def copy(
-    kind: RoundKind.Value = this.kind,
-    bs: => Seq[Better] = this.betters,
-    currentBet: Bet = this.currentBet,
-    pot: => Pot = this.pot) =
-    new BettingRound(
-      kind = kind,
-      bs = bs,
-      pot = pot,
-      currentBet = currentBet)
+case class BettingRound private (
+  kind: RoundKind.Value,
+  betters: Seq[Better],
+  currentBet: Bet,
+  pot: Pot) {
 
   val inTurn: Option[Better] = Try(currentBet.bettersToAct.next).map(Some(_)).getOrElse(None)
 
   val hasEnded = (1 == betters.size) || !betIsOpen
-
-  def betters = bs
 
   def betIsOpen = currentBet.matchedBy.toSet !=
     (betters.diff(currentBet.placedBy :: Nil)).toSet
@@ -100,7 +87,6 @@ class BettingRound private (
       case None => true
     }
   }
- 
 
   private def newBetContenders(better: Better): Iterator[Better] =
     LinkedHashSet((currentBet.bettersToAct.toList ++ betters.diff(better :: Nil)): _*).iterator

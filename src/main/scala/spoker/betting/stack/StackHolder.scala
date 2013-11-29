@@ -2,14 +2,17 @@ package spoker.betting.stack
 
 trait StackHolder {
 
-  val stack: Int
+  val tableName: String
 
-  val chief: StackHolderChief
+  val name: String
 
-  def collect(stack: Int): Unit = reportToChief(+stack)
+  def stack: Int = StackManagement.holderStack(tableName, name)
 
-  def submit(stack: Int): Unit = reportToChief(-stack)
+  def collect(stack: Int): Unit = reportToManagement(+stack)
 
-  private def reportToChief(x: Int): Unit = chief.report((this, x))
+  def submit(stack: Int): Unit = reportToManagement(-stack)
+
+  private def reportToManagement(stackUpdate: Int): Unit =
+    StackManagement.report(tableName, name, stackUpdate)
 
 }

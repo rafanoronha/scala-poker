@@ -1,53 +1,46 @@
 package spoker.betting
 
-import scala.util.{Failure, Success, Try}
+import scala.collection.mutable.Map
+import scala.util.{ Failure, Success, Try }
 import spoker._
-import spoker.betting.stack.{Pot, Blinds, MoveStack, StackHolder, StackHolderChief, UpdatedStackReport}
+import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder }
+import spoker.betting.stack.StackManagement
 
 object Table {
   def apply(
     players: Seq[Player],
-    blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)): Table =
+    blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)): Table = {
+    val tableName = "Table"
+    StackManagement.startManaging(
+      tableName,
+      Map(tableName -> 0) ++
+        players.foldLeft(Map[String, Int]())((status, player) => status + (player.name -> 50)))
     new Table(
       players = players,
       currentRound = None,
-      p = Pot(
-        blinds = blinds),
-      bsOption = None)
+      pot = Pot(
+        blinds = blinds,
+        tableName = tableName),
+      betters= None,
+      name = tableName)
+  }
 }
 
-class Table(
-  val players: Seq[Player],
-  var currentRound: Option[BettingRound],
-  p: Pot,
-  bsOption: Option[Seq[PositionedPlayer]]) extends StackHolderChief {
-
-  var pot: Pot = p.withTable(this)
-  var bs: Option[Seq[PositionedPlayer]] = bsOption
-
-  def report(data: UpdatedStackReport): Unit = data match {
-    case (p: Pot, updatedStack) => updatePotStack(p, updatedStack)
-    case (pp: PositionedPlayer, updatedStack) => updateBetterStack(pp, updatedStack)
-  }
-
-  def updatePotStack(pot: Pot, updatedStack: Int): Unit =
-    this.pot = this.pot.copy(stack = this.pot.stack + updatedStack)
-
-  def updateBetterStack(better: PositionedPlayer, updatedStack: Int): Unit = {
-    val xs = bs.get
-    val i = xs.indexOf(better)
-    this.bs = Some(xs.updated(i, xs(i).copy(stack = xs(i).stack + updatedStack)))
-  }
+case class Table(
+  players: Seq[Player],
+  currentRound: Option[BettingRound],
+  pot: Pot,
+  betters: Option[Seq[PositionedPlayer]],
+  name: String) {
 
   def newHand = {
-    this.bs = Some(positionPlayers(players))
-    this.currentRound = Some(BettingRound.preFlop(
-      bs = bs.get,
-      pot = pot))
-    this
+    val updatedBetters = positionPlayers(players) 
+    copy(
+      betters = Some(updatedBetters),
+      currentRound = Some(BettingRound.preFlop(
+        betters = updatedBetters,
+        pot = pot)))
   }
-
-  def betters: Seq[PositionedPlayer] = bs.getOrElse(Nil)
 
   def nextRound = {
     object UnclosedRound {
@@ -61,16 +54,13 @@ class Table(
       case RiverRound() => throw new NoMoreRoundsException
       case (Some(it)) => RoundKind(1 + it.kind.id)
     }) match {
-      case Success(kind) => {
-        val round = BettingRound.nextRound(
+      case Success(kind) =>
+        copy(currentRound = Some(BettingRound.nextRound(
           kind = kind,
-          bs = this.betters,
+          betters = this.betters.get,
           pot = this.pot,
           currentBet = this.currentRound.get.currentBet.copy(
-            bettersToAct = bettersFromPositionedPlayers(this.betters).iterator))
-        this.currentRound = Some(round)
-        this
-      }
+            bettersToAct = bettersFromPositionedPlayers(this.betters.get).iterator))))
       case Failure(e) => throw e
     }
   }
@@ -80,24 +70,22 @@ class Table(
   def place(ba: BetterAction): Table = {
     val current = currentRound.get
     val bet = current.place(ba)
-    if (ba.action == Fold) {
-      this.bs = Some(this.betters.diff(ba.better :: Nil))
-    }
-    val next = current.copy(
-      bs = this.betters,
-      currentBet = bet)
-    if (1 == this.betters.size) {
-      MoveStack(pot.stack, from = pot, to = this.betters.head)
-    }
-    this.currentRound = Some(next)
-    this
+    val updatedBetters =
+      if (ba.action == Fold) Some(this.betters.get.diff(ba.better :: Nil))
+      else this.betters
+    if (1 == updatedBetters.get.size) MoveStack(pot.stack, from = pot, to = this.betters.get.head)
+    copy(
+        betters = updatedBetters,
+        currentRound = Some(currentRound.get.copy(
+      betters = updatedBetters.get,
+      currentBet = bet)))
   }
 
   private def positionPlayers(players: Seq[Player]) = players match {
     case Nil => Nil
     case (sb :: bb :: others) =>
-      new PositionedPlayer(sb, this, SmallBlind) ::
-        new PositionedPlayer(bb, this, BigBlind) ::
-        others.map(p => new PositionedPlayer(p, this))
+      new PositionedPlayer(sb, this.name, SmallBlind) ::
+        new PositionedPlayer(bb, this.name, BigBlind) ::
+        others.map(p => new PositionedPlayer(p, this.name))
   }
 }
