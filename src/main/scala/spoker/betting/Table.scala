@@ -3,25 +3,26 @@ package spoker.betting
 import scala.collection.mutable.Map
 import scala.util.{ Failure, Success, Try }
 import spoker._
-import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder }
-import spoker.betting.stack.StackManagement
+import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder, StackManagement, TableStatus }
 
 object Table {
   def apply(
     players: Seq[Player],
     blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)): Table = {
     val tableName = "Table"
-    StackManagement.startManaging(
-      tableName,
-      Map(tableName -> 0) ++
-        players.foldLeft(Map[String, Int]())((status, player) => status + (player.name -> 50)))
+    def startStackManagement = {
+      val (potStatus: TableStatus, playersStatus: TableStatus) =
+        (Map(tableName -> 0), players.foldLeft(Map[String, Int]())((status, player) => status + (player.name -> 50)))
+      StackManagement.startManaging(tableName, potStatus ++ playersStatus)
+    }
+    startStackManagement
     new Table(
       players = players,
       currentRound = None,
       pot = Pot(
         blinds = blinds,
         tableName = tableName),
-      betters= None,
+      betters = None,
       name = tableName)
   }
 }
@@ -34,7 +35,7 @@ case class Table(
   name: String) {
 
   def newHand = {
-    val updatedBetters = positionPlayers(players) 
+    val updatedBetters = positionPlayers(players)
     copy(
       betters = Some(updatedBetters),
       currentRound = Some(BettingRound.preFlop(
@@ -44,10 +45,10 @@ case class Table(
 
   def nextRound = {
     object UnclosedRound {
-      def unapply(round: Some[BettingRound]) = round.isDefined && !round.get.hasEnded
+      def unapply(round: Some[BettingRound]): Boolean = round.map(!_.hasEnded).getOrElse(false)
     }
     object RiverRound {
-      def unapply(round: Option[BettingRound]) = round.isDefined && River == round.get.kind
+      def unapply(round: Some[BettingRound]) = round.map(_.kind == River).getOrElse(false)
     }
     Try(currentRound match {
       case UnclosedRound() => throw new UnclosedRoundException
@@ -68,17 +69,21 @@ case class Table(
   def showdown = Unit
 
   def place(ba: BetterAction): Table = {
-    val current = currentRound.get
-    val bet = current.place(ba)
-    val updatedBetters =
+    def foldingOut =
       if (ba.action == Fold) Some(this.betters.get.diff(ba.better :: Nil))
       else this.betters
-    if (1 == updatedBetters.get.size) MoveStack(pot.stack, from = pot, to = this.betters.get.head)
+    def potToWinner: PartialFunction[Seq[PositionedPlayer], Unit] = {
+      case winner :: Nil => MoveStack(pot.stack, from = pot, to = winner)
+    }
+    val current = currentRound.get
+    val bet = current.place(ba)
+    val updatedBetters = foldingOut
+    updatedBetters collect potToWinner
     copy(
-        betters = updatedBetters,
-        currentRound = Some(currentRound.get.copy(
-      betters = updatedBetters.get,
-      currentBet = bet)))
+      betters = updatedBetters,
+      currentRound = Some(currentRound.get.copy(
+        betters = updatedBetters.get,
+        currentBet = bet)))
   }
 
   private def positionPlayers(players: Seq[Player]) = players match {
