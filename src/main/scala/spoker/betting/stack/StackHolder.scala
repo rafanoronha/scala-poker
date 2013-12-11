@@ -6,7 +6,7 @@ trait StackHolder {
 
   val name: String
 
-  def stack: Int = StackManagement.holderStack(tableName, name)
+  def stack: Int = StackManagement.currentState(tableName, name)
 
   def collect(stack: Int): Unit = reportToManagement(+stack)
 

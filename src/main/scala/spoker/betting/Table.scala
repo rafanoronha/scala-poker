@@ -3,19 +3,18 @@ package spoker.betting
 import scala.collection.mutable.Map
 import scala.util.{ Failure, Success, Try }
 import spoker._
-import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder, StackManagement, TableStatus }
+import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder, StackManagement }
+import spoker.dealer.{ Dealer, CardsDealing, CardsManagement }
+import spoker.hand.Hand
 
 object Table {
   def apply(
     players: Seq[Player],
-    blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2)): Table = {
+    blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2),
+    cardsDealing: CardsDealing = CardsDealing): Table = {
     val tableName = "Table"
-    def startStackManagement = {
-      val (potStatus: TableStatus, playersStatus: TableStatus) =
-        (Map(tableName -> 0), players.foldLeft(Map[String, Int]())((status, player) => status + (player.name -> 50)))
-      StackManagement.startManaging(tableName, potStatus ++ playersStatus)
-    }
-    startStackManagement
+    StackManagement.startManaging(tableName, tableName +: players.map(_.name))
+    CardsManagement.startManaging(tableName, tableName +: players.map(_.name))
     new Table(
       players = players,
       currentRound = None,
@@ -23,7 +22,8 @@ object Table {
         blinds = blinds,
         tableName = tableName),
       betters = None,
-      name = tableName)
+      tableName = tableName,
+      cardsDealing = cardsDealing)
   }
 }
 
@@ -32,32 +32,33 @@ case class Table(
   currentRound: Option[BettingRound],
   pot: Pot,
   betters: Option[Seq[PositionedPlayer]],
-  name: String) {
+  tableName: String,
+  cardsDealing: CardsDealing) extends Dealer {
 
   def newHand = {
     val updatedBetters = positionPlayers(players)
-    copy(
+    val table = copy(
       betters = Some(updatedBetters),
       currentRound = Some(BettingRound.preFlop(
         betters = updatedBetters,
         pot = pot)))
+    table.dealHoleCards
+    table
   }
 
   def nextRound = {
     object UnclosedRound {
       def unapply(round: Some[BettingRound]): Boolean = round.map(!_.hasEnded).getOrElse(false)
     }
-    object RiverRound {
-      def unapply(round: Some[BettingRound]) = round.map(_.kind == River).getOrElse(false)
-    }
-    Try(currentRound match {
-      case UnclosedRound() => throw new UnclosedRoundException
-      case RiverRound() => throw new NoMoreRoundsException
-      case (Some(it)) => RoundKind(1 + it.kind.id)
+    Try((currentRound, currentRound.get.kind) match {
+      case (UnclosedRound(), _) => throw new UnclosedRoundException
+      case (_, River) => throw new NoMoreRoundsException
+      case (_, PreFlop) => dealFlopCards
+      case _ => dealNextCommunityCard
     }) match {
-      case Success(kind) =>
+      case Success(_) =>
         copy(currentRound = Some(BettingRound.nextRound(
-          kind = kind,
+          kind = RoundKind(1 + currentRound.get.kind.id),
           betters = this.betters.get,
           pot = this.pot,
           currentBet = this.currentRound.get.currentBet.copy(
@@ -66,7 +67,11 @@ case class Table(
     }
   }
 
-  def showdown = Unit
+  def showdown = {
+    val winner = betters.get.zip(betters.get.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._1
+    MoveStack(pot.stack, from = pot, to = winner)
+    this
+  }
 
   def place(ba: BetterAction): Table = {
     def foldingOut =
@@ -89,8 +94,8 @@ case class Table(
   private def positionPlayers(players: Seq[Player]) = players match {
     case Nil => Nil
     case (sb :: bb :: others) =>
-      new PositionedPlayer(sb, this.name, SmallBlind) ::
-        new PositionedPlayer(bb, this.name, BigBlind) ::
-        others.map(p => new PositionedPlayer(p, this.name))
+      new PositionedPlayer(sb, this.tableName, SmallBlind) ::
+        new PositionedPlayer(bb, this.tableName, BigBlind) ::
+        others.map(p => new PositionedPlayer(p, this.tableName))
   }
 }
