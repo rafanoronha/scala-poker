@@ -16,8 +16,6 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   class StubbedCardsDealing(stub: Map[DealtCardTarget, StubbedCards]) extends CardsDealing {
     override def nextCardTo(target: DealtCardTarget): Card = {
-      println()
-      println(target)
       val card = stub(target).head
       stub(target) -= card
       card
