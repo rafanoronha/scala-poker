@@ -1,16 +1,24 @@
 package spoker.betting
 
-private object BettingRoundExtractors {
-  object BigBlind {
-    def unapply(b: Better) = Position.BigBlind == b.position
+private[betting] trait BettingRoundExtractors { this: BettingRound =>
+
+  object OtherThanInTurn {
+    def unapply(b: Better) = inTurn match {
+      case Some(x) => b != x
+      case None => true
+    }
   }
 
   object SmallBlind {
-    def unapply(b: Better) = Position.SmallBlind == b.position
+    def unapply(b: Better) = b == smallBlind
+  }
+
+  object BigBlind {
+    def unapply(b: Better) = b == bigBlind
   }
 
   object NonBigBlind {
-    def unapply(b: Better) = Position.BigBlind != b.position
+    def unapply(b: Better) = b != bigBlind
   }
 
   object OtherThanFold {

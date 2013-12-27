@@ -6,7 +6,7 @@ import spoker.Player
 trait Dealer {
   val cardsDealing: CardsDealing
   val tableName: String
-  val betters: Option[Seq[PositionedPlayer]]
+  val players: Seq[PositionedPlayer]
 
   def dealFlopCards: Unit = for {
     c <- 1 to 3
@@ -14,7 +14,7 @@ trait Dealer {
 
   def dealHoleCards: Unit = for {
     c <- 1 to 2
-    b <- betters.get
+    b <- players
   } yield CardsManagement.report((tableName, b.name, cardsDealing.nextCardTo(PlayerReceivingCard(b.name))))
 
   def dealNextCommunityCard: Unit =

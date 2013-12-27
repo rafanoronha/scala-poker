@@ -43,7 +43,8 @@ class RoboPokerSpec extends FunSpec with ShouldMatchers {
         println(blinds)
         println(players)
         println(rounds)
-        var table = Table(players.map(_._1), blinds).newHand
+        //var table = Table(players.map(_._1), blinds).newHand
+        var table = Table(Nil)
         rounds.foreach(r => {
           r.foreach(a => {
             val betterAction = (a._1, table.currentRound.get.betters.find(_.player.name == a._2).get)
@@ -54,7 +55,7 @@ class RoboPokerSpec extends FunSpec with ShouldMatchers {
             table = table.nextRound
         })
         players.foreach(p => {
-          val better = table.betters.get.find(_.player == p._1).get
+          val better = table.players.find(_.player == p._1).get
           p._2 should be(better.stack)
         })
       })

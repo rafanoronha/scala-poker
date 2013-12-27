@@ -6,8 +6,9 @@ import spoker.dealer.CardsManagement
 
 case class PositionedPlayer(
   player: Player,
-  tableName: String,
-  position: Position.Value = Position.Any) extends StackHolder {
+  tableName: String = null,
+  isButton: Boolean = false,
+  isActive: Boolean = true) extends StackHolder {
 
   val name = player.name
 

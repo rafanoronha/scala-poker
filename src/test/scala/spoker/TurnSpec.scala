@@ -1,10 +1,10 @@
 package spoker.betting.spec
 
-import org.scalatest.{BeforeAndAfter, FunSpec}
+import org.scalatest.{ BeforeAndAfter, FunSpec }
 import org.scalatest.matchers.ShouldMatchers
-
 import spoker._
 import spoker.betting._
+import org.scalatest.Tag
 
 class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
@@ -14,14 +14,14 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   before {
     table = Table(
-      players = new Player("p1") :: new Player("p2") :: new Player("p3") :: Nil
-    ).newHand
+      players = new PositionedPlayer(player = new Player("p1")) ::
+        new PositionedPlayer(player = new Player("p2")) ::
+        new PositionedPlayer(player = new Player("p3"), isButton = true) :: Nil).newHand
     round = table.currentRound.get
   }
 
   def player(name: String) = table.currentRound.get.betters.find(
-    _.positionedPlayer.name equals name
-  ).get
+    _.positionedPlayer.name equals name).get
 
   def smallBlind = player("p1")
 
@@ -30,14 +30,49 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   def dealer = player("p3")
 
   it("should allow player in turn to place action") {
-    round.place(smallBlind.call)
+    round.place(dealer.call)
   }
   it("should not allow player out of turn to place action") {
     evaluating {
-      round.place(bigBlind.call)
+      round.place(smallBlind.call)
     } should produce[OutOfTurnException]
   }
   it("should advance current turn after an action") {
-    table.place(smallBlind.call).place(bigBlind.call)
+    table.place(dealer.call).place(smallBlind.call)
+  }
+  it("should correctly advance current turn after every given action") {
+    table = Table(
+      players = new PositionedPlayer(player = new Player("p1")) ::
+        new PositionedPlayer(player = new Player("p2"), isButton = true) ::
+        new PositionedPlayer(player = new Player("p3")) ::
+        new PositionedPlayer(player = new Player("p4")) ::
+        new PositionedPlayer(player = new Player("p5")) ::
+        new PositionedPlayer(player = new Player("p6")) ::
+        new PositionedPlayer(player = new Player("p7")) ::
+        new PositionedPlayer(player = new Player("p8")) :: Nil).newHand
+    table
+      .place(player("p5").raise(4))
+      .place(player("p6").fold)
+      .place(player("p7").call)
+      .place(player("p8").call)
+      .place(player("p1").raise(6))
+      .place(player("p2").raise(8))
+      .place(player("p3").call)
+      .place(player("p4").call)
+      .place(player("p5").call)
+      .place(player("p7").fold)
+      .place(player("p8").call)
+      .place(player("p1").call).nextRound
+      .place(player("p3").raise(2))
+      .place(player("p4").fold)
+      .place(player("p5").fold)
+      .place(player("p8").call)
+      .place(player("p1").fold)
+      .place(player("p2").raise(4))
+      .place(player("p3").raise(6))
+      .place(player("p8").call)
+      .place(player("p2").fold).nextRound
+      .place(player("p3").raise(2))
+      .place(player("p8").fold)
   }
 }

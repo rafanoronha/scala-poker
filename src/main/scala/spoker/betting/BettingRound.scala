@@ -1,36 +1,36 @@
 package spoker.betting
 
 import scala.util.{ Failure, Success, Try }
-import spoker.betting.{ BettingRoundExtractors => Is }
 import spoker.betting.stack.{ Pot, MoveStack }
 import scala.collection.mutable.LinkedHashSet
 
 object BettingRound {
   def preFlop(
-    betters: Seq[Better],
+    players: Seq[PositionedPlayer],
+    bettersToAct: Seq[Better],
+    smallBlind: PositionedPlayer,
+    bigBlind: PositionedPlayer,
     pot: Pot) = {
-    val bb = betters.find {
-      BigBlind == _.position
-    }.get
-    pot.collectBigBlindFrom(bb)
-    pot.collectSmallBlindFrom(betters.find {
-      SmallBlind == _.position
-    }.get)
+    pot.collectBigBlindFrom(bigBlind)
+    pot.collectSmallBlindFrom(smallBlind)
     new BettingRound(
       kind = PreFlop,
-      betters = betters,
-      currentBet = Bet(value = pot.blinds.bigBlind, placedBy = bb, bettersToAct = betters.iterator),
+      players = players,
+      currentBet = Bet(
+        value = pot.blinds.bigBlind,
+        placedBy = bigBlind,
+        bettersToAct = bettersToAct.iterator),
       pot = pot)
   }
 
   def nextRound(
     kind: RoundKind.Value,
-    betters: Seq[Better],
+    players: Seq[PositionedPlayer],
     pot: Pot,
     currentBet: Bet) = {
     new BettingRound(
       kind = kind,
-      betters = betters,
+      players = players,
       currentBet = currentBet,
       pot = pot)
   }
@@ -38,40 +38,42 @@ object BettingRound {
 
 case class BettingRound private (
   kind: RoundKind.Value,
-  betters: Seq[Better],
+  players: Seq[PositionedPlayer],
   currentBet: Bet,
-  pot: Pot) {
+  pot: Pot) extends AnyRef with BettingRoundExtractors with PlayersPositioning {
 
   val inTurn: Option[Better] = Try(currentBet.bettersToAct.next).map(Some(_)).getOrElse(None)
 
-  val hasEnded = (1 == betters.size) || !betIsOpen
+  val hasEnded = (1 == players.filter(_.isActive).size) || !betIsOpen
 
-  def betIsOpen = currentBet.matchedBy.toSet !=
-    (betters.diff(currentBet.placedBy :: Nil)).toSet
+  def betters: Seq[Better] = players
+
+  def betIsOpen = currentBet.value > 0 && currentBet.matchedBy.toSet !=
+    (players.filter(_.isActive).diff(currentBet.placedBy :: Nil)).toSet
 
   def place(ba: BetterAction): Bet = {
     val (action, better, placedBy) = (ba.action, ba.better, currentBet.placedBy)
-    (kind, action, better) match {
-      case (PreFlop, Is.OtherThanFold(), Is.SmallBlind()) => {
-        pot.collectSmallBlindFrom(better)
-      }
-      case _ => ()
-    }
-    Try((action, better, placedBy) match {
-      case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
-      case (Check, Is.NonBigBlind(), _) => throw new NonBigBlindCheckException
-      case (Check, _, OtherThanInTurn()) => throw new CantCheckException
-      case (Check, _, Is.BigBlind()) => None
-      case (Raise(value), placedBy, _) => {
+    def smallBlindDiscount(value: Int): Int =
+      if (kind == PreFlop && better == smallBlind && currentBet.value == pot.blinds.bigBlind)
+        value - pot.blinds.smallBlind
+      else value
+    Try((action, better, placedBy, kind) match {
+      case (_, OtherThanInTurn(), _, _) => throw new OutOfTurnException
+      case (Check, _, BigBlind(), PreFlop) if currentBet.value == pot.blinds.bigBlind => None
+      case (Check, _, _, _) if currentBet.value > 0 => throw new CantCheckException
+      case (Check, _, _, _) => None
+      case (Raise(v), placedBy, _, _) => {
+        val value = smallBlindDiscount(v)
         MoveStack(value, from = placedBy, to = pot)
         Some(Bet(
           value = value,
           placedBy = placedBy,
           bettersToAct = newBetContenders(placedBy)))
       }
-      case (Fold, player, _) => None
-      case (Call, player, _) => {
-        MoveStack(currentBet.value, from = player, to = pot)
+      case (Fold, player, _, _) => None
+      case (Call, player, _, _) => {
+        val value = smallBlindDiscount(currentBet.value)
+        MoveStack(value, from = player, to = pot)
         Some(currentBet.copy(
           matchedBy = player +: currentBet.matchedBy))
       }
@@ -81,13 +83,6 @@ case class BettingRound private (
     }
   }
 
-  private object OtherThanInTurn {
-    def unapply(b: Better) = inTurn match {
-      case Some(x) => b != x
-      case None => true
-    }
-  }
-
   private def newBetContenders(better: Better): Iterator[Better] =
-    LinkedHashSet((currentBet.bettersToAct.toList ++ betters.diff(better :: Nil)): _*).iterator
+    LinkedHashSet((currentBet.bettersToAct.toList ++ betters.filter(_.isActive).diff(better :: Nil)): _*).iterator
 }

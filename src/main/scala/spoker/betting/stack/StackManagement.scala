@@ -8,6 +8,6 @@ object StackManagement extends MutableStateManagement[Int, Int] {
     currentState(tableName, holderName) + su
 
   override def initialState(holderName: String): Int =
-    if (holderName == "Table") 0
+    if (holderName.startsWith("Table")) 0
     else 50
 }

@@ -8,10 +8,6 @@ package object betting {
     val PreFlop, Flop, Turn, River = Value
   }
 
-  object Position extends Enumeration {
-    val BigBlind, SmallBlind, Any = Value
-  }
-
   object BetterAction {
     def apply(better: Better) = {
       (a: Action) => new BetterAction(a, better)
@@ -22,7 +18,7 @@ package object betting {
 
   class OutOfTurnException extends Exception
 
-  class NonBigBlindCheckException extends Exception
+  class NonBigBlindPreFlopCheckException extends Exception
 
   class CantCheckException extends Exception
 
@@ -35,13 +31,14 @@ package object betting {
   val Turn = RoundKind.Turn
   val River = RoundKind.River
 
-  val SmallBlind = Position.SmallBlind
-  val BigBlind = Position.BigBlind
- 
   
-  implicit def positionedPlayerFroBetter(better: Better): PositionedPlayer =
+  implicit def positionedPlayerFromBetter(better: Better): PositionedPlayer =
     better.positionedPlayer
 
+  implicit def positionedPlayersFromBetters(betters: Seq[Better]): Seq[PositionedPlayer] = betters map {
+    positionedPlayerFromBetter(_)
+  }    
+    
   implicit def betterFromPositionedPlayer(positionedPlayer: PositionedPlayer): Better =
     Better(positionedPlayer)
 

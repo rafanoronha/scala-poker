@@ -28,7 +28,9 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   before {
     table = Table(
-      players = new Player("p1") :: new Player("p2") :: new Player("p3") :: Nil,
+      players = new PositionedPlayer(player = new Player("p1")) ::
+        new PositionedPlayer(player = new Player("p2")) ::
+        new PositionedPlayer(player = new Player("p3"), isButton = true) :: Nil,
       cardsDealing = new StubbedCardsDealing(
         Map(
           Community -> StubbedCards((Two, Clubs), (Three, Clubs), (Four, Clubs), (Five, Clubs), (Six, Clubs)),
@@ -46,9 +48,18 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   def player2 = player("p2")
 
   def player3 = player("p3")
+  
+  def playPreFlop = {
+    table = table.place(player3.call).place(player1.call).place(player2.check)
+    table = table.currentRound.get.kind match {
+      case River => table
+      case _ => table.nextRound
+    }
+    this
+  }  
 
   def playNextRound = {
-    table = table.place(player1.call).place(player2.check).place(player3.call)
+    table = table.place(player1.check).place(player2.check).place(player3.check)
     table = table.currentRound.get.kind match {
       case River => table
       case _ => table.nextRound
@@ -60,7 +71,7 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
     it("should run a hand through pre-flop to showdown") {
       def currentRoundKind = table.currentRound.get.kind
       currentRoundKind should be(PreFlop)
-      playNextRound
+      playPreFlop
       currentRoundKind should be(Flop)
       playNextRound
       currentRoundKind should be(Turn)
@@ -75,7 +86,7 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       } should produce[UnclosedRoundException]
     }
     it("should not have any betting round after river") {
-      playNextRound.playNextRound.playNextRound.playNextRound
+      playPreFlop.playNextRound.playNextRound.playNextRound
       evaluating {
         table.nextRound
       } should produce[NoMoreRoundsException]
@@ -86,27 +97,28 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   describe("Showdown") {
     it("should only take place after the river")(pending)
   }
+
   describe("Pot") {
     it("should be won by best showdown rank owner") {
-      table = table.place(player1.raise(4)).place(player2.call).place(player3.call)
-        .nextRound.place(player1.raise(8)).place(player2.fold).place(player3.call)
-        .nextRound.place(player1.raise(8)).place(player3.call)
+      table = table.place(player3.call).place(player1.call).place(player2.check)
+        .nextRound.place(player1.raise(10)).place(player2.fold).place(player3.call)
+        .nextRound.place(player1.check).place(player3.check)
       table.showdown
-      (player3 stack) should be(78)
+      (player3 stack) should be(64)
     }
     it("should be won by unmatched bet owner") {
-      table = table.place(player1.raise(4)).place(player2.call).place(player3.fold)
-        .nextRound.place(player1.raise(8)).place(player2.fold)
-      (player1 stack) should be(56)
+      table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
+        .nextRound.place(player2.check).place(player3.raise(8)).place(player2.fold)
+      (player3 stack) should be(57)
     }
     it("should collect the blinds") {
       table.pot.stack should be(3)
     }
     it("should collect all played stakes") {
-      table = table.place(player1.raise(4)).place(player2.call).place(player3.fold)
-        .nextRound.place(player1.raise(4)).place(player2.call)
-        .nextRound.place(player1.raise(4)).place(player2.call)
-      table.pot.stack should be(28)
+      table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
+        .nextRound.place(player2.check).place(player3.raise(4)).place(player2.call)
+        .nextRound.place(player2.check).place(player3.raise(4)).place(player2.call)
+      table.pot.stack should be(27)
     }
   }
 
