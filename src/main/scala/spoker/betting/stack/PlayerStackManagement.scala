@@ -3,7 +3,7 @@ package spoker.betting.stack
 import scala.collection.mutable.Map
 import spoker.internals.MSM.MutableStateManagement
 
-object StackManagement extends MutableStateManagement[Int, Int] {
+object PlayerStackManagement extends MutableStateManagement[Int, Int] {
   override def updateState(tableName: String, holderName: String, su: Int): Int =
     currentState(tableName, holderName) + su
 

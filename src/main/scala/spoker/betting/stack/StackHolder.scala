@@ -6,13 +6,16 @@ trait StackHolder {
 
   val name: String
 
-  def stack: Int = StackManagement.currentState(tableName, name)
+  def stack: Int = PlayerStackManagement.currentState(tableName, name)
 
-  def collect(stack: Int): Unit = reportToManagement(+stack)
+  def collect(stack: Int)(from: StackHolder): Unit =
+    (this.collected(stack), from.submited(stack))
 
-  def submit(stack: Int): Unit = reportToManagement(-stack)
+  def collected(stack: Int): Unit = reportToManagement(+stack)
+
+  def submited(stack: Int): Unit = reportToManagement(-stack)
 
   private def reportToManagement(stackUpdate: Int): Unit =
-    StackManagement.report(tableName, name, stackUpdate)
+    PlayerStackManagement.report(tableName, name, stackUpdate)
 
 }

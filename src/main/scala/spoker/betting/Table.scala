@@ -3,7 +3,7 @@ package spoker.betting
 import scala.collection.mutable.Map
 import scala.util.{ Failure, Success, Try }
 import spoker._
-import spoker.betting.stack.{ Pot, Blinds, MoveStack, StackHolder, StackManagement }
+import spoker.betting.stack.{ Pot, Blinds, StackHolder, PlayerStackManagement }
 import spoker.dealer.{ Dealer, CardsDealing, CardsManagement }
 import spoker.hand.Hand
 import scala.util.Random
@@ -14,7 +14,7 @@ object Table {
     blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2),
     cardsDealing: CardsDealing = CardsDealing): Table = {
     val tableName = "Table" + Random.nextInt
-    StackManagement.startManaging(tableName, tableName +: players.map(_.name))
+    PlayerStackManagement.startManaging(tableName, tableName +: players.map(_.name))
     CardsManagement.startManaging(tableName, tableName +: players.map(_.name))
     new Table(
       currentRound = None,
@@ -71,7 +71,7 @@ case class Table(
 
   def showdown = {
     val winner = players.filter(_.isActive).zip(players.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._1
-    MoveStack(pot.stack, from = pot, to = winner)
+    winner.collect(pot.stack)(from = pot)
     this
   }
 
@@ -82,7 +82,7 @@ case class Table(
           ba.better.positionedPlayer.copy(isActive = false))
       else this.players
     def potToWinner(players: Seq[PositionedPlayer]): Unit = players.filter(_.isActive) match {
-      case winner :: Nil => MoveStack(pot.stack, from = pot, to = winner)
+      case winner :: Nil => winner.collect(pot.stack)(from = pot)
       case _ => ()
     }
     val current = currentRound.get

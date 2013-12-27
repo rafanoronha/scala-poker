@@ -104,21 +104,21 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
         .nextRound.place(player1.raise(10)).place(player2.fold).place(player3.call)
         .nextRound.place(player1.check).place(player3.check)
       table.showdown
-      (player3 stack) should be(64)
+      (player3 stack) should be(62)
     }
     it("should be won by unmatched bet owner") {
       table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
         .nextRound.place(player2.check).place(player3.raise(8)).place(player2.fold)
-      (player3 stack) should be(57)
+      (player3 stack) should be(55)
     }
     it("should collect the blinds") {
       table.pot.stack should be(3)
     }
     it("should collect all played stakes") {
       table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
-        .nextRound.place(player2.check).place(player3.raise(4)).place(player2.call)
-        .nextRound.place(player2.check).place(player3.raise(4)).place(player2.call)
-      table.pot.stack should be(27)
+        .nextRound.place(player2.check).place(player3.raise(8)).place(player2.call)
+        .nextRound.place(player2.check).place(player3.raise(12)).place(player2.call)
+      table.pot.stack should be(25)
     }
   }
 

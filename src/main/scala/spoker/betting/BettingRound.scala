@@ -1,7 +1,7 @@
 package spoker.betting
 
 import scala.util.{ Failure, Success, Try }
-import spoker.betting.stack.{ Pot, MoveStack }
+import spoker.betting.stack.Pot 
 import scala.collection.mutable.LinkedHashSet
 
 object BettingRound {
@@ -53,18 +53,13 @@ case class BettingRound private (
 
   def place(ba: BetterAction): Bet = {
     val (action, better, placedBy) = (ba.action, ba.better, currentBet.placedBy)
-    def smallBlindDiscount(value: Int): Int =
-      if (kind == PreFlop && better == smallBlind && currentBet.value == pot.blinds.bigBlind)
-        value - pot.blinds.smallBlind
-      else value
     Try((action, better, placedBy, kind) match {
       case (_, OtherThanInTurn(), _, _) => throw new OutOfTurnException
       case (Check, _, BigBlind(), PreFlop) if currentBet.value == pot.blinds.bigBlind => None
       case (Check, _, _, _) if currentBet.value > 0 => throw new CantCheckException
       case (Check, _, _, _) => None
-      case (Raise(v), placedBy, _, _) => {
-        val value = smallBlindDiscount(v)
-        MoveStack(value, from = placedBy, to = pot)
+      case (Raise(value), placedBy, _, _) => {
+        pot.collectUntil(value)(from = placedBy)
         Some(Bet(
           value = value,
           placedBy = placedBy,
@@ -72,8 +67,7 @@ case class BettingRound private (
       }
       case (Fold, player, _, _) => None
       case (Call, player, _, _) => {
-        val value = smallBlindDiscount(currentBet.value)
-        MoveStack(value, from = player, to = pot)
+        pot.collectUntil(currentBet.value)(from = player)
         Some(currentBet.copy(
           matchedBy = player +: currentBet.matchedBy))
       }
