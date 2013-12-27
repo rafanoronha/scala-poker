@@ -31,25 +31,23 @@ package object betting {
   val Turn = RoundKind.Turn
   val River = RoundKind.River
 
-  
-  implicit def positionedPlayerFromBetter(better: Better): PositionedPlayer =
-    better.positionedPlayer
+  implicit def betterFromManageablePlayer(manageablePlayer: ManageablePlayer): Better =
+    Better(manageablePlayer)
 
-  implicit def positionedPlayersFromBetters(betters: Seq[Better]): Seq[PositionedPlayer] = betters map {
-    positionedPlayerFromBetter(_)
-  }    
-    
-  implicit def betterFromPositionedPlayer(positionedPlayer: PositionedPlayer): Better =
-    Better(positionedPlayer)
+  implicit def bettersFromManageablePlayers(manageablePlayers: Seq[ManageablePlayer]): Seq[Better] =
+    manageablePlayers map betterFromManageablePlayer
 
-  implicit def bettersFromPositionedPlayers(positionedPlayers: Seq[PositionedPlayer]): Seq[Better] =
-    positionedPlayers map betterFromPositionedPlayer
+  implicit def manageablePlayerFromBetter(better: Better): ManageablePlayer =
+    better.manageablePlayer
 
-  implicit def playersFromBetters(betters: Seq[Better]): Seq[Player] = betters map {
-    playerFromBetter(_)
-  }
+  implicit def positionedPlayerFromBetter(b: Better): PositionedPlayer =
+    b.positionedPlayer
 
-  implicit def playerFromBetter(better: Better): Player = better.positionedPlayer.player
+  implicit def positionedPlayerFromManageablePlayer(mp: ManageablePlayer): PositionedPlayer =
+    mp.positionedPlayer
+
+  implicit def playerFromBetter(better: Better): Player =
+    better.manageablePlayer.positionedPlayer.player
 
   implicit def fromTuple(tuple: BetterActionTuple): BetterAction = BetterAction(tuple._1, tuple._2)
 

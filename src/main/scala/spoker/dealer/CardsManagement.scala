@@ -1,11 +1,11 @@
 package spoker.dealer
 
-import spoker.internals.MSM.MutableStateManagement
+import spoker.internals.MutableStateManagement
 import spoker.{ Card, Cards }
 
-object CardsManagement extends MutableStateManagement[Cards, Card] {
-  override def updateState(tableName: String, holderName: String, su: Card): Cards =
-    su +: currentState(tableName, holderName)
+class CardsManagement extends MutableStateManagement[Cards, Card] {
+  override def updateState(holderName: String, su: Card): Cards =
+    su +: currentState(holderName)
 
   override def initialState(holderName: String): Cards = Nil
 }

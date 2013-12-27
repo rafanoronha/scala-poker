@@ -1,30 +1,32 @@
 package spoker.betting
 
+import spoker.ManageablePlayer
+
 trait PlayersPositioning {
 
-  val players: Seq[PositionedPlayer]
+  val players: Seq[ManageablePlayer]
 
-  def button: PositionedPlayer = players.find(isButton).get
+  def button: ManageablePlayer = players.find(isButton).get
 
-  def smallBlind: PositionedPlayer = startingToTheLeftOfButton.head
+  def smallBlind: ManageablePlayer = startingToTheLeftOfButton.head
 
-  def bigBlind: PositionedPlayer = continually(startingAtButton).drop(2).head
-  
+  def bigBlind: ManageablePlayer = continually(startingAtButton).drop(2).head
+
   def bettersToAct = this
 
-  def startingAtButton: Seq[PositionedPlayer] =
+  def startingAtButton: Seq[ManageablePlayer] =
     players.dropWhile(isNotButton).takeWhile(_ => true) ++ players.takeWhile(isNotButton)
 
-  def startingToTheLeftOfButton: Seq[PositionedPlayer] =
+  def startingToTheLeftOfButton: Seq[ManageablePlayer] =
     continually(startingAtButton).drop(1).take(players.size)
 
-  def startingToTheLeftOfBigBlind: Seq[PositionedPlayer] =
+  def startingToTheLeftOfBigBlind: Seq[ManageablePlayer] =
     continually(startingAtButton).drop(3).take(players.size)
 
-  private def isButton(pp: PositionedPlayer) = pp.isButton
+  private def isButton(p: ManageablePlayer) = p.isButton
 
-  private def isNotButton(pp: PositionedPlayer) = !pp.isButton
+  private def isNotButton(p: ManageablePlayer) = !p.isButton
 
-  private def continually(ps: Seq[PositionedPlayer]): Stream[PositionedPlayer] = Stream.continually(ps).flatten
+  private def continually(ps: Seq[ManageablePlayer]): Stream[ManageablePlayer] = Stream.continually(ps).flatten
 
 }

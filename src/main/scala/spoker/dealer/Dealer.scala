@@ -1,22 +1,24 @@
 package spoker.dealer
 
-import spoker.betting.PositionedPlayer
 import spoker.Player
+import spoker.ManageablePlayer
 
 trait Dealer {
   val cardsDealing: CardsDealing
-  val tableName: String
-  val players: Seq[PositionedPlayer]
+  val cardsManagement: CardsManagement
+  val players: Seq[ManageablePlayer]
+
+  val communityName = Community.getClass().getSimpleName()
 
   def dealFlopCards: Unit = for {
     c <- 1 to 3
-  } yield CardsManagement.report(tableName, tableName, cardsDealing.nextCardTo(Community))
+  } yield cardsManagement.report(communityName, cardsDealing.nextCardTo(Community))
 
   def dealHoleCards: Unit = for {
     c <- 1 to 2
     b <- players
-  } yield CardsManagement.report((tableName, b.name, cardsDealing.nextCardTo(PlayerReceivingCard(b.name))))
+  } yield cardsManagement.report(b.name, cardsDealing.nextCardTo(PlayerReceivingCard(b.name)))
 
   def dealNextCommunityCard: Unit =
-    CardsManagement.report(tableName, tableName, cardsDealing.nextCardTo(Community))
+    cardsManagement.report(communityName, cardsDealing.nextCardTo(Community))
 }

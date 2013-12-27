@@ -40,8 +40,9 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       .newHand
   }
 
-  def player(name: String) = table.currentRound.get.betters.find(
+  def player(name: String) : Better = table.currentRound.get.players.find(
     _.positionedPlayer.name equals name).get
+
 
   def player1 = player("p1")
 
