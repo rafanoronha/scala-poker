@@ -3,7 +3,6 @@ package spoker.hand.spec
 import spoker._
 import spoker.hand.Hand
 import spoker.hand.HandRanking._
-
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 
@@ -81,6 +80,32 @@ class HandSpec extends FunSpec with ShouldMatchers {
       'ranking(Straight),
       'cards(five),
       'matched(five)
+    )
+  }
+  it("should understand wheel straight") {
+    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) ::(Three, Hearths) ::(Ace, Hearths) ::(Four, Spades) :: Nil
+
+    val five = (Ace, Hearths) ::(Five, Clubs) ::(Four, Spades) ::(Three, Hearths) ::(Two, Clubs) :: Nil
+
+    Hand(cards) should have(
+      'ranking(Straight),
+      'cards(five),
+      'matched(five)
+    )
+  }
+  it("should understand that wheel straight flush is not a royal flush") {
+    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Hearths) ::(Ten, Hearths) ::(Three, Clubs) ::(Ace, Clubs) ::(Four, Clubs) :: Nil
+
+    val five = (Ace, Clubs) ::(Five, Clubs) ::(Four, Clubs) ::(Three, Clubs) ::(Two, Clubs) :: Nil
+
+    Hand(cards) should have(
+      'ranking(StraightFlush),
+      'cards(five),
+      'matched(five)
+    )
+    
+    Hand(cards) should not have(
+        'ranking(RoyalFlush)
     )
   }
   it("should understand three of a kind") {

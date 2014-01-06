@@ -6,8 +6,8 @@ import spoker.hand.HandSpecializations.{FourOfAKind, ThreeOfAKind, OnePair}
 private object HandExtractors {
   object Broadway {
     def unapply(cards: Cards) = {
-      cards.head.rank match {
-        case Ace => Option(cards)
+      cards.take(5).map(_.rank) match {
+        case List(Ace, King, Queen, Jack, Ten) => Option(cards)
         case _ => None
       }
     }
@@ -19,7 +19,11 @@ private object HandExtractors {
         c => (c.last.rank.id to c.last.rank.id + 4).reverse == c.map(_.rank.id)
       } match {
         case matched: Some[Cards] => Option(matched.get)
-        case None => None
+        case None =>
+          if (cards.head.rank == Ace && cards.takeRight(4).map(_.rank) == List(Five,Rank.Four,Rank.Three,Two))
+            Option(cards.head +: cards.takeRight(4))
+          else
+            None
       }
   }
 
