@@ -14,17 +14,23 @@ private object HandExtractors {
   }
 
   object Straight {
-    def unapply(cards: Cards): Option[Cards] =
-      cards.take(5) :: cards.take(6).takeRight(5) :: cards.takeRight(5) :: Nil find {
-        c => (c.last.rank.id to c.last.rank.id + 4).reverse == c.map(_.rank.id)
-      } match {
-        case matched: Some[Cards] => Option(matched.get)
-        case None =>
-          if (cards.head.rank == Ace && cards.takeRight(4).map(_.rank) == List(Five,Rank.Four,Rank.Three,Two))
-            Option(cards.head +: cards.takeRight(4))
-          else
-            None
-      }
+    def unapply(cards: Cards): Option[Cards] = {
+      val longestStraight: Tuple2[Int, Cards] = cards.foldLeft(Tuple2(0, List.empty[Card]))((resultPair, card) => {
+        if (resultPair._1 == 5 || (resultPair._1 > 0 && card.rank == resultPair._2.head.rank)) //already found the straight or have a pair
+          resultPair
+        else if (resultPair._1 == 0 || card.rank.id < (resultPair._2.head.rank.id - 1)) //restart straight counting
+          (1, card :: Nil)
+        else
+          (resultPair._1 + 1, card :: resultPair._2)
+      })
+      
+      if (longestStraight._1 >= 5)
+        Option(longestStraight._2.reverse)
+      else if (longestStraight._1 == 4 && longestStraight._2.head.rank == Two && cards.head.rank == Ace) //wheel straight
+        Option(longestStraight._2.reverse :+ cards.head)
+      else
+        None
+    }
   }
 
   object Flush {
