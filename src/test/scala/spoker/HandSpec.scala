@@ -9,7 +9,7 @@ import org.scalatest.matchers.ShouldMatchers
 class HandSpec extends FunSpec with ShouldMatchers {
 
   it("should understand royal flush") {
-    val cards = (Nine, Clubs) ::(Ace, Hearths) ::(King, Clubs) ::
+    val cards = (Nine, Clubs) ::(Ace, Hearts) ::(King, Clubs) ::
       (Ace, Clubs) ::(Jack, Clubs) ::(Queen, Clubs) ::(Ten, Clubs) :: Nil
 
     val five = (Ace, Clubs) ::(King, Clubs) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
@@ -33,10 +33,10 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand four of a kind") {
-    val cards = (Four, Spades) ::(Ace, Spades) ::(Ace, Hearths) ::
+    val cards = (Four, Spades) ::(Ace, Spades) ::(Ace, Hearts) ::
       (Two, Spades) ::(Ace, Clubs) ::(Ace, Diamonds) ::(Three, Clubs) :: Nil
 
-    val matched = (Ace, Spades) ::(Ace, Hearths) ::(Ace, Clubs) ::(Ace, Diamonds) :: Nil
+    val matched = (Ace, Spades) ::(Ace, Hearts) ::(Ace, Clubs) ::(Ace, Diamonds) :: Nil
     val kicker = (Four, Spades)
     val five = matched :+ kicker
 
@@ -47,10 +47,10 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand full house") {
-    val cards = (Three, Spades) ::(Nine, Clubs) ::(Ace, Hearths) ::
-      (Three, Hearths) ::(Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+    val cards = (Three, Spades) ::(Nine, Clubs) ::(Ace, Hearts) ::
+      (Three, Hearts) ::(Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
 
-    val five = (Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) ::(Three, Spades) ::(Three, Hearths) :: Nil
+    val five = (Two, Spades) ::(Two, Clubs) ::(Two, Diamonds) ::(Three, Spades) ::(Three, Hearts) :: Nil
 
     Hand(cards) should have(
       'ranking(FullHouse),
@@ -59,10 +59,10 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand flush") {
-    val cards = (Seven, Hearths) ::(Queen, Hearths) ::(Ace, Spades) ::
-      (Ace, Hearths) ::(Nine, Hearths) ::(Two, Hearths) ::(Five, Hearths) :: Nil
+    val cards = (Seven, Hearts) ::(Queen, Hearts) ::(Ace, Spades) ::
+      (Ace, Hearts) ::(Nine, Hearts) ::(Two, Hearts) ::(Five, Hearts) :: Nil
 
-    val five = (Ace, Hearths) ::(Queen, Hearths) ::(Nine, Hearths) ::(Seven, Hearths) ::(Five, Hearths) :: Nil
+    val five = (Ace, Hearts) ::(Queen, Hearts) ::(Nine, Hearts) ::(Seven, Hearts) ::(Five, Hearts) :: Nil
 
     Hand(cards) should have(
       'ranking(Flush),
@@ -71,7 +71,7 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand broadway straight") {
-    val cards = (Ace, Spades) ::(King, Clubs) ::(Four, Hearths) ::
+    val cards = (Ace, Spades) ::(King, Clubs) ::(Four, Hearts) ::
       (Four, Spades) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
 
     val five = (Ace, Spades) ::(King, Clubs) ::(Queen, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) :: Nil
@@ -83,9 +83,9 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand wheel straight") {
-    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) ::(Three, Hearths) ::(Ace, Hearths) ::(Four, Spades) :: Nil
+    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Clubs) ::(Ten, Clubs) ::(Three, Hearts) ::(Ace, Hearts) ::(Four, Spades) :: Nil
 
-    val five = (Ace, Hearths) ::(Five, Clubs) ::(Four, Spades) ::(Three, Hearths) ::(Two, Clubs) :: Nil
+    val five = (Ace, Hearts) ::(Five, Clubs) ::(Four, Spades) ::(Three, Hearts) ::(Two, Clubs) :: Nil
 
     Hand(cards) should have(
       'ranking(Straight),
@@ -94,7 +94,7 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand that wheel straight flush is not a royal flush") {
-    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Hearths) ::(Ten, Hearths) ::(Three, Clubs) ::(Ace, Clubs) ::(Four, Clubs) :: Nil
+    val cards = (Five, Clubs) ::(Two, Clubs) ::(Jack, Hearts) ::(Ten, Hearts) ::(Three, Clubs) ::(Ace, Clubs) ::(Four, Clubs) :: Nil
 
     val five = (Ace, Clubs) ::(Five, Clubs) ::(Four, Clubs) ::(Three, Clubs) ::(Two, Clubs) :: Nil
 
@@ -109,11 +109,11 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand three of a kind") {
-    val cards = (Nine, Diamonds) ::(Three, Spades) ::(Three, Hearths) ::
-      (Queen, Hearths) ::(Ace, Diamonds) ::(Three, Clubs) ::(Five, Clubs) :: Nil
+    val cards = (Nine, Diamonds) ::(Three, Spades) ::(Three, Hearts) ::
+      (Queen, Hearts) ::(Ace, Diamonds) ::(Three, Clubs) ::(Five, Clubs) :: Nil
 
-    val matched = (Three, Spades) ::(Three, Hearths) ::(Three, Clubs) :: Nil
-    val kickers = (Ace, Diamonds) ::(Queen, Hearths) :: Nil
+    val matched = (Three, Spades) ::(Three, Hearts) ::(Three, Clubs) :: Nil
+    val kickers = (Ace, Diamonds) ::(Queen, Hearts) :: Nil
     val five = matched ++ kickers
 
     Hand(cards) should have(
@@ -123,11 +123,11 @@ class HandSpec extends FunSpec with ShouldMatchers {
     )
   }
   it("should understand two pair") {
-    val cards = (Jack, Hearths) ::(Eight, Hearths) ::(Three, Spades) ::
-      (Three, Hearths) ::(Five, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+    val cards = (Jack, Hearts) ::(Eight, Hearts) ::(Three, Spades) ::
+      (Three, Hearts) ::(Five, Spades) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
 
-    val matched = (Three, Spades) ::(Three, Hearths) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
-    val kicker = (Jack, Hearths)
+    val matched = (Three, Spades) ::(Three, Hearts) ::(Two, Clubs) ::(Two, Diamonds) :: Nil
+    val kicker = (Jack, Hearts)
     val five = matched :+ kicker
 
     Hand(cards) should have(
@@ -167,8 +167,8 @@ class HandSpec extends FunSpec with ShouldMatchers {
   it("should be ranked") {
     val actual = Seq(
       Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))),
-      Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds))),
-      Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds))))
+      Hand(Seq((Three, Spades), (Three, Hearts), (Two, Spades), (Two, Clubs), (Two, Diamonds))),
+      Hand(Seq((Three, Spades), (Three, Hearts), (Five, Spades), (Two, Clubs), (Two, Diamonds))))
       .map(_.ranking)
     actual should equal(Seq(RoyalFlush, FullHouse, TwoPair))
   }
@@ -177,8 +177,8 @@ class HandSpec extends FunSpec with ShouldMatchers {
       (Hand(Seq((Ace, Clubs), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))),
         Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Ten, Diamonds))),
         Hand(Seq((Ace, Spades), (King, Clubs), (Queen, Clubs), (Jack, Clubs), (Ten, Clubs))),
-        Hand(Seq((Three, Spades), (Three, Hearths), (Two, Spades), (Two, Clubs), (Two, Diamonds))),
-        Hand(Seq((Three, Spades), (Three, Hearths), (Five, Spades), (Two, Clubs), (Two, Diamonds))),
+        Hand(Seq((Three, Spades), (Three, Hearts), (Two, Spades), (Two, Clubs), (Two, Diamonds))),
+        Hand(Seq((Three, Spades), (Three, Hearts), (Five, Spades), (Two, Clubs), (Two, Diamonds))),
         Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds))))
 
     royalFlush should be > straightFlush
