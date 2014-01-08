@@ -1,15 +1,17 @@
 package spoker.betting
 
 import scala.util.{ Failure, Success, Try }
-import spoker.betting.stack.Pot 
 import scala.collection.mutable.LinkedHashSet
+
+import spoker.ManageablePlayer
+import spoker.betting.stack.Pot 
 
 object BettingRound {
   def preFlop(
-    players: Seq[PositionedPlayer],
-    bettersToAct: Seq[Better],
-    smallBlind: PositionedPlayer,
-    bigBlind: PositionedPlayer,
+    players: Seq[ManageablePlayer],
+    bettersToAct: Seq[ManageablePlayer],
+    smallBlind: ManageablePlayer,
+    bigBlind: ManageablePlayer,
     pot: Pot) = {
     pot.collectBigBlindFrom(bigBlind)
     pot.collectSmallBlindFrom(smallBlind)
@@ -25,7 +27,7 @@ object BettingRound {
 
   def nextRound(
     kind: RoundKind.Value,
-    players: Seq[PositionedPlayer],
+    players: Seq[ManageablePlayer],
     pot: Pot,
     currentBet: Bet) = {
     new BettingRound(
@@ -38,18 +40,16 @@ object BettingRound {
 
 case class BettingRound private (
   kind: RoundKind.Value,
-  players: Seq[PositionedPlayer],
+  players: Seq[ManageablePlayer],
   currentBet: Bet,
   pot: Pot) extends AnyRef with BettingRoundExtractors with PlayersPositioning {
 
-  val inTurn: Option[Better] = Try(currentBet.bettersToAct.next).map(Some(_)).getOrElse(None)
+  val inTurn: Option[ManageablePlayer] = Try(currentBet.bettersToAct.next).map(Some(_)).getOrElse(None)
 
   val hasEnded = (1 == players.filter(_.isActive).size) || !betIsOpen
 
-  def betters: Seq[Better] = players
-
   def betIsOpen = currentBet.value > 0 && currentBet.matchedBy.toSet !=
-    (players.filter(_.isActive).diff(currentBet.placedBy :: Nil)).toSet
+    (players.filter(_.isActive).diff(currentBet.placedBy.manageablePlayer :: Nil)).toSet
 
   def place(ba: BetterAction): Bet = {
     val (action, better, placedBy) = (ba.action, ba.better, currentBet.placedBy)
@@ -69,7 +69,7 @@ case class BettingRound private (
       case (Call, player, _, _) => {
         pot.collectUntil(currentBet.value)(from = player)
         Some(currentBet.copy(
-          matchedBy = player +: currentBet.matchedBy))
+          matchedBy = player.manageablePlayer +: currentBet.matchedBy))
       }
     }) match {
       case Success(updatedBet) => updatedBet.getOrElse(currentBet)
@@ -77,6 +77,7 @@ case class BettingRound private (
     }
   }
 
-  private def newBetContenders(better: Better): Iterator[Better] =
-    LinkedHashSet((currentBet.bettersToAct.toList ++ betters.filter(_.isActive).diff(better :: Nil)): _*).iterator
+  private def newBetContenders(better: ManageablePlayer): Iterator[ManageablePlayer] =
+    LinkedHashSet((currentBet.bettersToAct.toList ++
+        players.filter(_.isActive).diff(better :: Nil)): _*).iterator
 }

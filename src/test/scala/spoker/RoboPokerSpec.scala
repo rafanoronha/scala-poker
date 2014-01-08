@@ -47,7 +47,7 @@ class RoboPokerSpec extends FunSpec with ShouldMatchers {
         var table = Table(Nil)
         rounds.foreach(r => {
           r.foreach(a => {
-            val betterAction = (a._1, table.currentRound.get.betters.find(_.player.name == a._2).get)
+            val betterAction: (Action, Better) = (a._1, table.currentRound.get.players.find(_.manageablePlayer.name == a._2).get)
             println("placing action " + betterAction)
             table.place(betterAction)
           })

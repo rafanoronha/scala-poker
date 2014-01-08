@@ -1,22 +1,13 @@
 package spoker.betting
 
-import spoker.{ Player, Cards }
-import spoker.betting.stack.StackHolder
-import spoker.dealer.CardsManagement
+import spoker.Player
 
 case class PositionedPlayer(
   player: Player,
-  tableName: String = null,
   isButton: Boolean = false,
-  isActive: Boolean = true) extends StackHolder {
+  isActive: Boolean = true) {
 
   val name = player.name
-
-  def cards: Cards = CardsManagement.currentState(tableName, name)
-
-  override def equals(that: Any) = that match {
-    case pp: PositionedPlayer => this.player == pp.player
-  }
 
   override def hashCode = this.player.##
 }

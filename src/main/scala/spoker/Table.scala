@@ -1,38 +1,49 @@
-package spoker.betting
+package spoker
 
 import scala.collection.mutable.Map
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Success, Try, Random }
+
 import spoker._
-import spoker.betting.stack.{ Pot, Blinds, StackHolder, PlayerStackManagement }
-import spoker.dealer.{ Dealer, CardsDealing, CardsManagement }
-import spoker.hand.Hand
-import scala.util.Random
+import spoker.betting._
+import spoker.betting.stack._
+import spoker.dealer._
+import spoker.hand._
 
 object Table {
   def apply(
     players: Seq[PositionedPlayer],
     blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2),
     cardsDealing: CardsDealing = CardsDealing): Table = {
-    val tableName = "Table" + Random.nextInt
-    PlayerStackManagement.startManaging(tableName, tableName +: players.map(_.name))
-    CardsManagement.startManaging(tableName, tableName +: players.map(_.name))
+    val cardsManagement = new CardsManagement
+    val stackManagement = new StackManagement {
+      def initialState(holderName: String): Int =
+        if (holderName == "Pot") 0
+        else 50
+    }
     new Table(
       currentRound = None,
       pot = Pot(
         blinds = blinds,
-        tableName = tableName),
-      players = players.map(_.copy(tableName = tableName)),
-      tableName = tableName,
-      cardsDealing = cardsDealing)
+        stackManagement = stackManagement),
+      players = players.map(p =>
+        ManageablePlayer(
+          positionedPlayer = p,
+          cardsManagement = cardsManagement,
+          stackManagement = stackManagement)),
+      cardsDealing = cardsDealing,
+      cardsManagement = cardsManagement,
+      stackManagement = stackManagement)
   }
 }
 
 case class Table(
   currentRound: Option[BettingRound],
   pot: Pot,
-  players: Seq[PositionedPlayer],
-  tableName: String,
-  cardsDealing: CardsDealing) extends AnyRef with Dealer with PlayersPositioning {
+  players: Seq[ManageablePlayer],
+  cardsDealing: CardsDealing,
+  cardsManagement: CardsManagement,
+  stackManagement: StackManagement)
+  extends AnyRef with Dealer with PlayersPositioning {
 
   def newHand = {
     val table = copy(
@@ -56,15 +67,16 @@ case class Table(
       case (_, PreFlop) => dealFlopCards
       case _ => dealNextCommunityCard
     }) match {
-      case Success(_) =>
+      case Success(_) => {
+        val bta: Seq[ManageablePlayer] = bettersToAct.startingToTheLeftOfButton.filter(_.isActive)
         copy(
           currentRound = Some(BettingRound.nextRound(
             kind = RoundKind(1 + currentRound.get.kind.id),
             players = this.players.filter(_.isActive),
             pot = this.pot,
             currentBet = Bet(
-              bettersToAct = bettersFromPositionedPlayers(
-                bettersToAct.startingToTheLeftOfButton).filter(_.isActive).iterator))))
+              bettersToAct = bta.iterator))))
+      }
       case Failure(e) => throw e
     }
   }
@@ -76,12 +88,12 @@ case class Table(
   }
 
   def place(ba: BetterAction): Table = {
-    def foldingOut: Seq[PositionedPlayer] =
+    def foldingOut: Seq[ManageablePlayer] =
       if (ba.action == Fold)
-        this.players.updated(this.players.indexOf(ba.better.positionedPlayer),
-          ba.better.positionedPlayer.copy(isActive = false))
+        this.players.updated(this.players.indexOf(ba.better),
+          ba.better.folded)
       else this.players
-    def potToWinner(players: Seq[PositionedPlayer]): Unit = players.filter(_.isActive) match {
+    def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter(_.isActive) match {
       case winner :: Nil => winner.collect(pot.stack)(from = pot)
       case _ => ()
     }

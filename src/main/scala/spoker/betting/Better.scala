@@ -1,8 +1,8 @@
 package spoker.betting
 
-import spoker.Player
+import spoker.{Player, ManageablePlayer}
 
-case class Better(positionedPlayer: PositionedPlayer) {
+case class Better(manageablePlayer: ManageablePlayer) {
 
   lazy val myAction = BetterAction(this)
 
@@ -18,8 +18,7 @@ case class Better(positionedPlayer: PositionedPlayer) {
 
   override def equals(that: Any) = that match {
     case b: Better => playerFromBetter(this) == playerFromBetter(b)
-    case pp: PositionedPlayer => playerFromBetter(this) == pp.player
-    case p: Player => playerFromBetter(this) == p
+    case mp: ManageablePlayer => playerFromBetter(this) == mp.positionedPlayer.player
   }
 
   override def hashCode = playerFromBetter(this).##

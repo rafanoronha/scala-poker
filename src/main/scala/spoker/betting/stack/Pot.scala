@@ -1,24 +1,29 @@
 package spoker.betting.stack
 
-import spoker.betting.Table
-
 case class Pot(
   blinds: Blinds,
-  tableName: String) extends AnyRef with BlindsGathering with PotStackManagement {
-
-  val name = tableName
+  stackManagement: StackManagement) extends AnyRef with BlindsGathering {
   
-  // FIXME: discontinue this start/stop stuff
-  val hack = List("p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8")
-  startManaging(name, hack)
+  val name = "Pot"
+
+  val bettingStackManagement = new StackManagement {
+    def initialState(holderName: String): Int = 0
+  }
 
   def collectUntil(stack: Int)(from: StackHolder): Unit = {
-    val value = stack - potStackByPlayer(name, from.name)
+    val value = stack - potStackByPlayer(from.name)
     collect(value)(from)
   }
 
   override def collect(stack: Int)(from: StackHolder): Unit = {
     super.collect(stack)(from)
-    potStackCollected(name, from.name, stack)
+    potStackCollected(from.name, stack)
   }
+
+  private def potStackByPlayer(name: String): Int =
+    bettingStackManagement.currentState(name)
+
+  private def potStackCollected(name: String, stack: Int): Unit =
+    bettingStackManagement.report(name, stack)
+
 }
