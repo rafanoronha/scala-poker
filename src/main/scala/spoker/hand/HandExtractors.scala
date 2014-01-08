@@ -15,19 +15,19 @@ private object HandExtractors {
 
   object Straight {
     def unapply(cards: Cards): Option[Cards] = {
-      val longestStraight: Tuple2[Int, Cards] = cards.foldLeft(Tuple2(0, List.empty[Card]))((resultPair, card) => {
-        if (resultPair._1 == 5 || (resultPair._1 > 0 && card.rank == resultPair._2.head.rank)) //already found the straight or have a pair
-          resultPair
-        else if (resultPair._1 == 0 || card.rank.id < (resultPair._2.head.rank.id - 1)) //restart straight counting
-          (1, card :: Nil)
+      val longestStraight: Cards = cards.tail.foldLeft(List(cards.head))((result, card) => {
+        if (result.size == 5 || (result.size > 0 && card.rank == result.head.rank)) //already found the straight or have a pair
+          result
+        else if (result.size == 0 || card.rank.id < (result.head.rank.id - 1)) //restart straight counting
+          card :: Nil
         else
-          (resultPair._1 + 1, card :: resultPair._2)
+          card :: result
       })
       
-      if (longestStraight._1 >= 5)
-        Option(longestStraight._2.reverse)
-      else if (longestStraight._1 == 4 && longestStraight._2.head.rank == Two && cards.head.rank == Ace) //wheel straight
-        Option(longestStraight._2.reverse :+ cards.head)
+      if (longestStraight.size == 5)
+        Option(longestStraight.reverse)
+      else if (longestStraight.size == 4 && longestStraight.head.rank == Two && cards.head.rank == Ace) //wheel straight
+        Option(longestStraight.reverse :+ cards.head)
       else
         None
     }
