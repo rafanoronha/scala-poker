@@ -34,9 +34,9 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       cardsDealing = new StubbedCardsDealing(
         Map(
           Community -> StubbedCards((Two, Clubs), (Three, Clubs), (Four, Clubs), (Five, Clubs), (Six, Clubs)),
-          PlayerReceivingCard("p1") -> StubbedCards((Nine, Hearths), (Ten, Hearths)),
+          PlayerReceivingCard("p1") -> StubbedCards((Nine, Hearts), (Ten, Hearts)),
           PlayerReceivingCard("p2") -> StubbedCards((Nine, Spades), (Ten, Spades)),
-          PlayerReceivingCard("p3") -> StubbedCards((Two, Hearths), (Two, Spades)))))
+          PlayerReceivingCard("p3") -> StubbedCards((Two, Hearts), (Two, Spades)))))
       .newHand
   }
 

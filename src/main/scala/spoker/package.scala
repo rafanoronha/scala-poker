@@ -9,7 +9,7 @@ package object spoker {
   }
 
   object Suit extends Enumeration {
-    val Clubs, Diamonds, Hearths, Spades = Value
+    val Clubs, Diamonds, Hearts, Spades = Value
   }
 
   case class Player(name: String)
@@ -38,6 +38,6 @@ package object spoker {
 
   val Clubs = Suit.Clubs
   val Diamonds = Suit.Diamonds
-  val Hearths = Suit.Hearths
+  val Hearts = Suit.Hearts
   val Spades = Suit.Spades
 }
