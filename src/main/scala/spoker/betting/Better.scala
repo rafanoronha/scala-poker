@@ -1,12 +1,14 @@
 package spoker.betting
 
-import spoker.{Player, ManageablePlayer}
+import spoker.{ Player, ManageablePlayer }
 
 case class Better(manageablePlayer: ManageablePlayer) {
 
   lazy val myAction = BetterAction(this)
 
   def myActionIs(a: Action) = myAction(a)
+
+  def bet(value: Int) = myActionIs(Bet(value))
 
   def call = myActionIs(Call)
 

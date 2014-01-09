@@ -63,7 +63,7 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       .place(player("p7").fold)
       .place(player("p8").call)
       .place(player("p1").call).nextRound
-      .place(player("p3").raise(2))
+      .place(player("p3").bet(2))
       .place(player("p4").fold)
       .place(player("p5").fold)
       .place(player("p8").call)
@@ -72,7 +72,7 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       .place(player("p3").raise(6))
       .place(player("p8").call)
       .place(player("p2").fold).nextRound
-      .place(player("p3").raise(2))
+      .place(player("p3").bet(2))
       .place(player("p8").fold)
   }
 }

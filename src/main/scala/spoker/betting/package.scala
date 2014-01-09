@@ -22,6 +22,8 @@ package object betting {
 
   class CantCheckException extends Exception
 
+  class CantBetException extends Exception
+
   class UnclosedRoundException extends Exception
 
   class NoMoreRoundsException extends Exception

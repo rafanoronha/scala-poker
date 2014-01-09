@@ -20,7 +20,7 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
     round = table.currentRound.get
   }
 
-  def player(name: String) : Better = table.currentRound.get.players.find(
+  def player(name: String): Better = table.currentRound.get.players.find(
     _.positionedPlayer.name equals name).get
 
   def smallBlind = player("p1")
@@ -61,6 +61,14 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       evaluating {
         round.place(dealer.check)
       } should produce[CantCheckException]
+    }
+  }
+  describe("Bet") {
+    it("should not be placed if other bet is open") {
+      round = table.place(dealer.call).place(smallBlind.raise(10)).place(bigBlind.call).currentRound.get
+      evaluating {
+        round.place(dealer.bet(5))
+      } should produce[CantBetException]
     }
   }
 

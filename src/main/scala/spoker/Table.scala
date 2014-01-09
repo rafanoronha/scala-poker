@@ -74,7 +74,7 @@ case class Table(
             kind = RoundKind(1 + currentRound.get.kind.id),
             players = this.players.filter(_.isActive),
             pot = this.pot,
-            currentBet = Bet(
+            bettingState = BettingState(
               bettersToAct = bta.iterator))))
       }
       case Failure(e) => throw e
@@ -98,13 +98,13 @@ case class Table(
       case _ => ()
     }
     val current = currentRound.get
-    val bet = current.place(ba)
+    val bettingState = current.place(ba)
     val updatedPlayers = foldingOut
     potToWinner(updatedPlayers)
     copy(
       players = updatedPlayers,
       currentRound = Some(currentRound.get.copy(
         players = updatedPlayers,
-        currentBet = bet)))
+        bettingState = bettingState)))
   }
 }
