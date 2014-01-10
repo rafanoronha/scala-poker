@@ -71,5 +71,14 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       } should produce[CantBetException]
     }
   }
+  describe("Raise") {
+    it("should not be placed when there is no open bet") {
+      round = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check)
+        .nextRound.currentRound.get
+      evaluating {
+        round.place(smallBlind.raise(5))
+      } should produce[CantRaiseException]
+    }
+  }
 
 }

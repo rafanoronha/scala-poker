@@ -3,16 +3,21 @@ package spoker.betting.stack
 case class Pot(
   blinds: Blinds,
   stackManagement: StackManagement) extends AnyRef with BlindsGathering {
-  
+
   val name = "Pot"
 
   val bettingStackManagement = new StackManagement {
     def initialState(holderName: String): Int = 0
   }
 
-  def collectUntil(stack: Int)(from: StackHolder): Unit = {
-    val value = stack - potStackByPlayer(from.name)
+  def collectUntil(matching: Int)(from: StackHolder): Unit = {
+    val value = matching - potStackByPlayer(from.name)
     collect(value)(from)
+  }
+
+  def collectUntilMatching(amountBettedBy: StackHolder)(from: StackHolder): Unit = {
+    val amount = potStackByPlayer(amountBettedBy.name) - potStackByPlayer(from.name)
+    collect(amount)(from)
   }
 
   override def collect(stack: Int)(from: StackHolder): Unit = {
