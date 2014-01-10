@@ -14,9 +14,9 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   before {
     table = Table(
-      players = new PositionedPlayer(player = new Player("p1")) ::
-        new PositionedPlayer(player = new Player("p2")) ::
-        new PositionedPlayer(player = new Player("p3"), isButton = true) :: Nil).newHand
+      players = new PositionedPlayer(new Player("p1"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p2"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p3"), initialStack = 1500, isButton = true) :: Nil).newHand
     round = table.currentRound.get
   }
 
@@ -42,14 +42,14 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
   }
   it("should correctly advance current turn after every given action") {
     table = Table(
-      players = new PositionedPlayer(player = new Player("p1")) ::
-        new PositionedPlayer(player = new Player("p2"), isButton = true) ::
-        new PositionedPlayer(player = new Player("p3")) ::
-        new PositionedPlayer(player = new Player("p4")) ::
-        new PositionedPlayer(player = new Player("p5")) ::
-        new PositionedPlayer(player = new Player("p6")) ::
-        new PositionedPlayer(player = new Player("p7")) ::
-        new PositionedPlayer(player = new Player("p8")) :: Nil).newHand
+      players = new PositionedPlayer(new Player("p1"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p2"), initialStack = 1500, isButton = true) ::
+        new PositionedPlayer(new Player("p3"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p4"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p5"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p6"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p7"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p8"), initialStack = 1500) :: Nil).newHand
     table
       .place(player("p5").raise(4))
       .place(player("p6").fold)

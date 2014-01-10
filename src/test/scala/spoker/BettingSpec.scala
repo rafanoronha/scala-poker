@@ -14,9 +14,9 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   before {
     table = Table(
-      players = new PositionedPlayer(player = new Player("p1")) ::
-        new PositionedPlayer(player = new Player("p2")) ::
-        new PositionedPlayer(player = new Player("p3"), isButton = true) :: Nil).newHand
+      players = new PositionedPlayer(new Player("p1"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p2"), initialStack = 1500) ::
+        new PositionedPlayer(new Player("p3"), initialStack = 1500, isButton = true) :: Nil).newHand
     round = table.currentRound.get
   }
 

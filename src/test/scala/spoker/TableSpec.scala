@@ -27,9 +27,9 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
 
   before {
     table = Table(
-      players = new PositionedPlayer(player = new Player("p1")) ::
-        new PositionedPlayer(player = new Player("p2")) ::
-        new PositionedPlayer(player = new Player("p3"), isButton = true) :: Nil,
+      players = new PositionedPlayer(new Player("p1"), initialStack = 50) ::
+        new PositionedPlayer(new Player("p2"), initialStack = 50) ::
+        new PositionedPlayer(new Player("p3"), initialStack = 50, isButton = true) :: Nil,
       cardsDealing = new StubbedCardsDealing(
         Map(
           Community -> StubbedCards((Two, Clubs), (Three, Clubs), (Four, Clubs), (Five, Clubs), (Six, Clubs)),

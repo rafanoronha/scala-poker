@@ -4,6 +4,7 @@ import spoker.Player
 
 case class PositionedPlayer(
   player: Player,
+  initialStack: Double,
   isButton: Boolean = false,
   isActive: Boolean = true) {
 

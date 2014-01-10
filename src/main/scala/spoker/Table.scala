@@ -18,7 +18,7 @@ object Table {
     val stackManagement = new StackManagement {
       def initialState(holderName: String): Double =
         if (holderName == "Pot") 0
-        else 50
+        else players.find(_.name == holderName).get.initialStack
     }
     new Table(
       currentRound = None,
