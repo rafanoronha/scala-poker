@@ -28,7 +28,17 @@ sealed abstract class Hand(var c: Cards, var m: Cards) extends Ordered[Hand] {
 
   def this(cards: Cards) = this(cards, cards)
 
-  def compare(that: Hand): Int = this.ranking.compareTo(that.ranking)
+  def compare(that: Hand): Int = {
+    val rankCompare = this.ranking.compareTo(that.ranking)
+    if (rankCompare != 0)
+      rankCompare
+    else {
+      (cards zip that.cards).map((pair) => pair._1 compare pair._2).find(_ != 0) match {
+        case None => 0
+        case Some(compareResult) => compareResult
+      }
+    }
+  }
 }
 
 private object HandSpecializations {

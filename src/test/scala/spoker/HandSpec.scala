@@ -202,34 +202,122 @@ class HandSpec extends FunSpec with ShouldMatchers {
     straight should be < fullHouse
     twoPair should be > onePair
   }
-  it("should rank royal flush as greater than straight flush") {
+  it("should rank royal flush as higher than straight flush") {
     RoyalFlush should be > StraightFlush
   }
-  it("should rank straight flush as greater than four of a kind") {
+  it("should rank straight flush as higher than four of a kind") {
     StraightFlush should be > FourOfAKind
   }
-  it("should rank four of a kind as greater than full house") {
+  it("should rank four of a kind as higher than full house") {
     FourOfAKind should be > FullHouse
   }
-  it("should rank full house as greater than flush") {
+  it("should rank full house as higher than flush") {
     FullHouse should be > Flush
   }
-  it("should rank flush as greater than straight") {
+  it("should rank flush as higher than straight") {
     Flush should be > Straight
   }
-  it("should rank straight as greater than three of a kind") {
+  it("should rank straight as higher than three of a kind") {
     Straight should be > ThreeOfAKind
   }
-  it("should rank three of a kind as greater than two pair") {
+  it("should rank three of a kind as higher than two pair") {
     ThreeOfAKind should be > TwoPair
   }
-  it("should rank two pair as greater than one pair") {
+  it("should rank two pair as higher than one pair") {
     TwoPair should be > OnePair
   }
-  it("should rank one pair as greater than high card") {
+  it("should rank one pair as higher than high card") {
     OnePair should be > HighCard
   }
   it("should rank high card as less than full house") {
     HighCard should be < FullHouse
   }
+  it("should rank high card Ace as higher than high card King") {
+    val handAceHigh = Hand(Seq((Ace, Clubs), (Seven, Diamonds), (Eight, Diamonds), 
+      (Nine, Diamonds), (Ten, Diamonds), (King, Spades), (Three, Spades)))
+    val handKingHigh = Hand(Seq((Five, Clubs), (Seven, Diamonds), (Eight, Diamonds), 
+      (Nine, Diamonds), (Ten, Diamonds), (King, Spades), (Three, Spades)))
+    handAceHigh should be > handKingHigh
+  }
+  it("should use kicker when top cards have the same rank") {
+    val handSevenKicker = Hand(Seq((Ace, Clubs), (Seven, Diamonds), (Two, Diamonds), 
+      (Nine, Diamonds), (Ten, Diamonds), (King, Spades), (Three, Spades)))
+    val handEightKicker = Hand(Seq((Ace, Hearts), (Eight, Clubs), (Two, Spades), 
+      (Nine, Hearts), (Ten, Spades), (King, Diamonds), (Three, Hearts)))
+    handEightKicker should be > handSevenKicker
+  }
+  it("should rank six pair higher than five pair") {
+    val handSixPair = Hand(Seq((Three, Spades), (Four, Spades), (Jack, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handFivePair = Hand(Seq((Three, Diamonds), (Four, Clubs), (Jack, Clubs), (Five, Hearts), (Five, Clubs), (Ten, Spades), (Ace, Spades)))
+    handSixPair should be > handFivePair
+    handSixPair should equal (handSixPair)
+  }
+  it("should use kicker than single pairs have the same rank") {
+    val handKingKicker = Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handAceKicker = Hand(Seq((Three, Diamonds), (Four, Clubs), (Five, Clubs), (Six, Hearts), (Six, Clubs), (Ten, Spades), (Ace, Spades)))
+    handAceKicker should be > handKingKicker
+  }
+  it("should use kicker than two pairs have the same rank") {
+    val handKingKicker = Hand(Seq((Three, Spades), (Three, Hearts), (Five, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handJackKicker = Hand(Seq((Three, Diamonds), (Three, Clubs), (Five, Clubs), (Six, Hearts), (Six, Clubs), (Ten, Spades), (Jack, Spades)))
+    handKingKicker should be > handJackKicker
+  }
+  it("should compare top pairs first") {
+    val handFirstPairJacks = Hand(Seq((Three, Spades), (Three, Hearts), (Five, Spades), (Jack, Clubs), (Jack, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handFirstPairNines = Hand(Seq((Seven, Diamonds), (Seven, Clubs), (Five, Clubs), (Nine, Hearts), (Nine, Clubs), (Ten, Spades), (Jack, Spades)))
+    handFirstPairJacks should be > handFirstPairNines
+  }
+  it("should compare second pairs if top pairs are equal") {
+    val handSecondPairThrees = Hand(Seq((Three, Spades), (Three, Hearts), (Five, Spades), (Jack, Clubs), (Jack, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handSecondPairSevens = Hand(Seq((Seven, Diamonds), (Seven, Clubs), (Five, Clubs), (Jack, Hearts), (Jack, Clubs), (Ten, Spades), (Jack, Spades)))
+    handSecondPairThrees should be < handSecondPairSevens
+  }
+  it("should rank three of nines higher than three of fives") {
+    val handThreeOfFives = Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Five, Clubs), (Five, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val handThreeOfNines = Hand(Seq((Three, Spades), (Four, Spades), (Nine, Spades), (Nine, Clubs), (Nine, Diamonds), (Ten, Hearts), (King, Hearts)))
+    handThreeOfNines should be > handThreeOfFives
+  }
+  it("should rank queen straight higher than jack straight") {
+    val queenStraight = Hand(Seq((Queen, Clubs), (Jack, Clubs), (Ten, Clubs),(Nine, Spades), (Eight, Clubs), (Three, Hearts), (Five, Spades)))    
+    val jackStraight = Hand(Seq((Jack, Clubs), (Ten, Clubs),(Nine, Spades), (Eight, Clubs),(Seven, Clubs), (Three, Hearts), (Five, Spades)))
+    queenStraight should be > jackStraight
+  }
+  it("should use a kicker if top cards of the straight have the same rank") {
+    val queenStraightNineKicker = Hand(Seq((Queen, Clubs), (Jack, Clubs), (Ten, Clubs),(Nine, Spades), (Eight, Clubs), (Three, Hearts), (Five, Spades)))    
+    val queenStraightEightKicker = Hand(Seq((Queen, Spades), (Jack, Spades), (Ten, Spades),(Eight, Spades), (Eight, Diamonds), (Three, Diamonds), (Five, Clubs)))    
+    queenStraightNineKicker should be > queenStraightEightKicker
+  }
+  it("should rank jack flush higher than ten flush ") {
+    val jackFlush = Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Jack, Diamonds), (Three, Hearts), (Five, Spades)))
+    val tenFlush = Hand(Seq((Five, Clubs), (Seven, Clubs), (Eight, Clubs), (Nine, Clubs), (Ten, Clubs), (Three, Diamonds), (Five, Hearts)))
+    jackFlush should be > tenFlush
+  }
+  it("should use a kicker if top cards of the flush have the same rank") {
+    val jackFlushSixKicker = Hand(Seq((Six, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Jack, Diamonds), (Three, Hearts), (Five, Spades)))
+    val jackFlushFiveKicker = Hand(Seq((Five, Clubs), (Seven, Clubs), (Eight, Clubs), (Nine, Clubs), (Jack, Clubs), (Three, Diamonds), (Five, Hearts)))
+    jackFlushSixKicker should be > jackFlushFiveKicker
+  }
+  it("should rank full house with three kings higher than full house with three jacks") {
+    val threeKingsTwoFours = Hand(Seq((King, Diamonds), (King, Clubs), (Four, Diamonds), (Jack, Diamonds), (Four, Hearts), (King, Hearts), (Queen, Spades)))
+    val threeJacksTwoAces = Hand(Seq((Jack, Spades), (Jack, Hearts), (Jack, Clubs), (Ace, Diamonds), (Five, Clubs), (Ace, Hearts), (Queen, Hearts)))
+    threeKingsTwoFours should be > threeJacksTwoAces
+  }
+  it("should rank four sevens higher than four fives") {
+    val fourSevens = Hand(Seq((Seven, Diamonds), (Seven, Clubs), (Seven, Hearts), (Seven, Diamonds), (Eight, Clubs), (Three, Hearts), (Five, Spades)))
+    val fourFives = Hand(Seq((Nine, Diamonds), (Ten, Hearts), (King, Hearts), (Five, Diamonds), (Five, Clubs), (Five, Hearts), (Five, Diamonds)))
+    fourSevens should be > fourFives
+  }
+  it("should rank jack straight flush higher than ten straight flush ") {
+    val jackStraightFlush = Hand(Seq((Ten, Diamonds), (Seven, Diamonds), (Eight, Diamonds), (Nine, Diamonds), (Jack, Diamonds), (Three, Hearts), (Five, Spades)))
+    val tenStraightFlush = Hand(Seq((Six, Clubs), (Seven, Clubs), (Eight, Clubs), (Nine, Clubs), (Ten, Clubs), (Three, Diamonds), (Five, Hearts)))
+    jackStraightFlush should be > tenStraightFlush
+  }
+  it("should rank two royal flushes equally") {
+    pending
+    println("should rank two royal flushes equally")
+    val diamondRoyalFlush = Hand(Seq((Ten, Diamonds), (Ace, Diamonds), (Queen, Diamonds), (King, Diamonds), (Jack, Diamonds), (Three, Hearts), (Five, Diamonds)))
+    val clubRoyalFlush = Hand(Seq((Ten, Clubs), (Ace, Clubs), (Queen, Clubs), (King, Clubs), (Jack, Clubs), (Three, Hearts), (Five, Clubs)))
+    diamondRoyalFlush should be(clubRoyalFlush)
+  }
+
 }
