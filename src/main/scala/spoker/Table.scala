@@ -16,7 +16,7 @@ object Table {
     cardsDealing: CardsDealing = CardsDealing): Table = {
     val cardsManagement = new CardsManagement
     val stackManagement = new StackManagement {
-      def initialState(holderName: String): Int =
+      def initialState(holderName: String): Double =
         if (holderName == "Pot") 0
         else 50
     }

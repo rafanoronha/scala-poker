@@ -3,7 +3,7 @@ package spoker.betting
 sealed trait Action
 
 trait BettingAction {
-  val value: Int
+  val value: Double
 }
 
 object Call extends Action
@@ -12,6 +12,6 @@ object Check extends Action
 
 object Fold extends Action
 
-case class Raise(value: Int) extends Action with BettingAction
+case class Raise(value: Double) extends Action with BettingAction
 
-case class Bet(value: Int) extends Action with BettingAction
+case class Bet(value: Double) extends Action with BettingAction

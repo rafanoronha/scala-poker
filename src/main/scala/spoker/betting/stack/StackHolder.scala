@@ -6,16 +6,16 @@ trait StackHolder {
 
   val stackManagement: StackManagement
 
-  def stack: Int = stackManagement.currentState(name)
+  def stack: Double = stackManagement.currentState(name)
 
-  def collect(stack: Int)(from: StackHolder): Unit =
+  def collect(stack: Double)(from: StackHolder): Unit =
     (this.collected(stack), from.submited(stack))
 
-  def collected(stack: Int): Unit = reportToManagement(+stack)
+  def collected(stack: Double): Unit = reportToManagement(+stack)
 
-  def submited(stack: Int): Unit = reportToManagement(-stack)
+  def submited(stack: Double): Unit = reportToManagement(-stack)
 
-  private def reportToManagement(stackUpdate: Int): Unit =
+  private def reportToManagement(stackUpdate: Double): Unit =
     stackManagement.report(name, stackUpdate)
 
 }

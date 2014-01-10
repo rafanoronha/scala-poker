@@ -7,10 +7,10 @@ case class Pot(
   val name = "Pot"
 
   val bettingStackManagement = new StackManagement {
-    def initialState(holderName: String): Int = 0
+    def initialState(holderName: String): Double = 0
   }
 
-  def collectUntil(matching: Int)(from: StackHolder): Unit = {
+  def collectUntil(matching: Double)(from: StackHolder): Unit = {
     val value = matching - potStackByPlayer(from.name)
     collect(value)(from)
   }
@@ -20,15 +20,15 @@ case class Pot(
     collect(amount)(from)
   }
 
-  override def collect(stack: Int)(from: StackHolder): Unit = {
+  override def collect(stack: Double)(from: StackHolder): Unit = {
     super.collect(stack)(from)
     potStackCollected(from.name, stack)
   }
 
-  private def potStackByPlayer(name: String): Int =
+  private def potStackByPlayer(name: String): Double =
     bettingStackManagement.currentState(name)
 
-  private def potStackCollected(name: String, stack: Int): Unit =
+  private def potStackCollected(name: String, stack: Double): Unit =
     bettingStackManagement.report(name, stack)
 
 }

@@ -3,5 +3,5 @@ package spoker.betting
 import scala.collection.mutable.Map
 
 package object stack {
-  case class Blinds(smallBlind: Int, bigBlind: Int)
+  case class Blinds(smallBlind: Double, bigBlind: Double)
 }
