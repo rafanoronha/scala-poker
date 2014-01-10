@@ -2,7 +2,6 @@ package spoker.table.spec
 
 import org.scalatest.{ BeforeAndAfter, FunSpec }
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Tag
 import spoker._
 import spoker.betting._
 import spoker.dealer.CardsDealing
@@ -115,7 +114,7 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
     it("should collect the blinds") {
       table.pot.stack should be(3)
     }
-    it("should collect all played stakes", Tag("foo")) {
+    it("should collect all played stakes") {
       table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
         .nextRound.place(player2.check).place(player3.bet(8)).place(player2.call)
         .nextRound.place(player2.check).place(player3.bet(12)).place(player2.call)
