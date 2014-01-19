@@ -75,4 +75,18 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       .place(player("p3").bet(2))
       .place(player("p8").fold)
   }
+  
+  describe("hasEnded") {
+    it("should return false if players haven't made any moves yet") {
+      round.hasEnded should equal(false)
+    }
+    it("should return false after limping by small blind, because big blind ends preflop round") {
+      table = table.place(dealer.call).place(smallBlind.call)
+      table.currentRound.get.hasEnded should equal(false)
+    }
+    it("should return true when big blind ends pre-flop round") {
+      table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check)
+      table.currentRound.get.hasEnded should equal(true)
+    }
+  }
 }
