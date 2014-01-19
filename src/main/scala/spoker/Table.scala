@@ -88,18 +88,19 @@ case class Table(
   }
 
   def place(ba: BetterAction): Table = {
-    def foldingOut: Seq[ManageablePlayer] =
-      if (ba.action == Fold)
-        this.players.updated(this.players.indexOf(ba.better),
-          ba.better.folded)
-      else this.players
+    def updatePlayers: Seq[ManageablePlayer] = ba.action match {
+      case AllIn => this.players.updated(this.players.indexOf(ba.better), ba.better.pushedAllIn)
+      case Fold => this.players.updated(this.players.indexOf(ba.better), ba.better.folded)
+      case _ => this.players
+    }
+
     def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter(_.isActive) match {
       case winner :: Nil => winner.collect(pot.stack)(from = pot)
       case _ => ()
     }
     val current = currentRound.get
     val bettingState = current.place(ba)
-    val updatedPlayers = foldingOut
+    val updatedPlayers = updatePlayers
     potToWinner(updatedPlayers)
     copy(
       players = updatedPlayers,

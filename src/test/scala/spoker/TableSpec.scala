@@ -104,12 +104,16 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
         .nextRound.place(player1.bet(10)).place(player2.fold).place(player3.call)
         .nextRound.place(player1.check).place(player3.check)
       table.showdown
-      (player3 stack) should be(64)
+      player3.stack should be(64)
+      player2.stack should be(48)
+      player1.stack should be(38)
     }
     it("should be won by unmatched bet owner") {
       table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
         .nextRound.place(player2.check).place(player3.bet(8)).place(player2.fold)
-      (player3 stack) should be(55)
+      player3.stack should be(55)
+      player2.stack should be(46)
+      player1.stack should be(49)
     }
     it("should collect the blinds") {
       table.pot.stack should be(3)
@@ -119,6 +123,54 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
         .nextRound.place(player2.check).place(player3.bet(8)).place(player2.call)
         .nextRound.place(player2.check).place(player3.bet(12)).place(player2.call)
       table.pot.stack should be(49)
+    }
+  }
+  
+  describe("All in") {
+    it("should steal the blinds if other players fold") {
+      table.place(player3.allIn).place(player1.fold).place(player2.fold)
+      player3.stack should be(53)
+      player1.stack should be(49)
+      player2.stack should be(48)
+    }
+    it("should be won by best showdown rank owner") {
+      table = table.place(player3.allIn).place(player1.allIn).place(player2.allIn)
+      table.pot.stack should be(150)
+      player3.stack should be(0)
+      player1.stack should be(0)
+      player2.stack should be(0)
+      
+      table = table.nextRound.nextRound
+      table.showdown
+      player3.stack should be(150)
+      player1.stack should be(0)
+      player2.stack should be(0)
+    }
+    it("can be done by raising or calling") {
+      table = table.place(player3.raise(50)).place(player1.fold).place(player2.call).nextRound
+      table.pot.stack should be(101)
+      player3.stack should be(0)
+//      player1.stack should be(49)
+      player2.stack should be(0)
+      table = table.nextRound.nextRound
+      table.showdown
+      player3.stack should be(101)
+//      player1.stack should be(49)
+      player2.stack should be(0)
+    }
+    it("can be done by betting") {
+      table = table.place(player3.call).place(player1.call).place(player2.check).nextRound
+      table = table.place(player1.bet(48)).place(player2.fold).place(player3.call)
+      table.pot.stack should be(102)
+      player1.stack should be(0)
+//      player1.stack should be(48)
+      player3.stack should be(0)
+      
+      table = table.nextRound.nextRound
+      table.showdown
+      player3.stack should be(102)
+//      player1.stack should be(48)
+      player1.stack should be(0)
     }
   }
 

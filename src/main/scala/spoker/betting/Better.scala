@@ -14,6 +14,8 @@ case class Better(manageablePlayer: ManageablePlayer) {
 
   def check = myActionIs(Check)
 
+  def allIn = myActionIs(AllIn)
+
   def raise(value: Double) = myActionIs(Raise(value))
 
   def fold = myActionIs(Fold)

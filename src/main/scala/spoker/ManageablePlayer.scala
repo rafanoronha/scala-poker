@@ -18,6 +18,9 @@ case class ManageablePlayer(
   def folded = copy(
     positionedPlayer = positionedPlayer.copy(isActive = false))
 
+  def pushedAllIn = copy(
+    positionedPlayer = positionedPlayer.copy(isAllIn = true))
+
   override def equals(that: Any) = that match {
     case mp: ManageablePlayer => this.player == mp.player
   }

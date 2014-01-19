@@ -46,7 +46,7 @@ case class BettingRound private (
 
   val inTurn: Option[ManageablePlayer] = Try(bettingState.bettersToAct.next).map(Some(_)).getOrElse(None)
 
-  val hasEnded = (1 == players.filter(_.isActive).size) || !betIsOpen
+  val hasEnded = (1 >= players.filter(player => player.isActive && !player.isAllIn).size) || !betIsOpen
 
   def betIsOpen = bettingState.currentBet.isDefined && bettingState.matchedBy.toSet !=
     (players.filter(_.isActive).diff(bettingState.placedBy.manageablePlayer :: Nil)).toSet
@@ -79,6 +79,18 @@ case class BettingRound private (
         pot.collectUntilMatching(amountBettedBy = bettingState.placedBy)(from = player)
         Some(bettingState.copy(
           matchedBy = player.manageablePlayer +: bettingState.matchedBy))
+      }
+      case (AllIn, player, previousBetter, _) => {
+        val amount = player.stack
+        pot.collect(amount)(from = player)
+        bettingState.currentBet match {
+          case Some(Raise(earlierRaiseAmount)) if (amount < earlierRaiseAmount) =>
+            Some(bettingState)
+          case _ => 
+            Some(bettingState.copy(
+              currentBet = Some(Raise(amount)),
+              placedBy = player))
+        }
       }
     }) match {
       case Success(updatedBet) => updatedBet.getOrElse(bettingState)
