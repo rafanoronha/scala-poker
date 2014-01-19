@@ -39,6 +39,13 @@ sealed abstract class Hand(var c: Cards, var m: Cards) extends Ordered[Hand] {
       }
     }
   }
+  
+  override def equals(that : Any) : Boolean = {
+    that match {
+      case x: Hand => (compare(x) == 0)
+      case _ => (that == this)
+    }
+  }
 }
 
 private object HandSpecializations {

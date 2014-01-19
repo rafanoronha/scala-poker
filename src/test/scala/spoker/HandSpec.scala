@@ -250,7 +250,6 @@ class HandSpec extends FunSpec with ShouldMatchers {
     val handSixPair = Hand(Seq((Three, Spades), (Four, Spades), (Jack, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
     val handFivePair = Hand(Seq((Three, Diamonds), (Four, Clubs), (Jack, Clubs), (Five, Hearts), (Five, Clubs), (Ten, Spades), (Ace, Spades)))
     handSixPair should be > handFivePair
-    handSixPair should equal (handSixPair)
   }
   it("should use kicker than single pairs have the same rank") {
     val handKingKicker = Hand(Seq((Three, Spades), (Four, Spades), (Five, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
@@ -313,11 +312,15 @@ class HandSpec extends FunSpec with ShouldMatchers {
     jackStraightFlush should be > tenStraightFlush
   }
   it("should rank two royal flushes equally") {
-    pending
-    println("should rank two royal flushes equally")
     val diamondRoyalFlush = Hand(Seq((Ten, Diamonds), (Ace, Diamonds), (Queen, Diamonds), (King, Diamonds), (Jack, Diamonds), (Three, Hearts), (Five, Diamonds)))
     val clubRoyalFlush = Hand(Seq((Ten, Clubs), (Ace, Clubs), (Queen, Clubs), (King, Clubs), (Jack, Clubs), (Three, Hearts), (Five, Clubs)))
-    diamondRoyalFlush should be(clubRoyalFlush)
+    diamondRoyalFlush should equal(clubRoyalFlush)
+  }
+  it("should rank two equal hands equally") {
+    val hand1 = Hand(Seq((Three, Spades), (Four, Spades), (Jack, Spades), (Six, Clubs), (Six, Diamonds), (Ten, Hearts), (King, Hearts)))
+    val hand2 = Hand(Seq((Jack, Diamonds), (Six, Hearts), (Three, Diamonds), (Four, Diamonds), (Six, Spades), (Ten, Clubs), (King, Clubs)))
+
+    hand1 should equal(hand2)
   }
 
 }
