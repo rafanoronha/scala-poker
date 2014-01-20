@@ -88,5 +88,9 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check)
       table.currentRound.get.hasEnded should equal(true)
     }
+    it("should return false if the round wasn't open yet") {
+      table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check).nextRound.place(smallBlind.check)
+      table.currentRound.get.hasEnded should equal(false)
+    }
   }
 }
