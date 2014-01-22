@@ -75,7 +75,7 @@ case class Table(
             players = this.players.filter(_.isActive),
             pot = this.pot,
             bettingState = BettingState(
-              bettersToAct = bta.iterator))))
+              bettersToAct = bta))))
       }
       case Failure(e) => throw e
     }
