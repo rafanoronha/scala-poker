@@ -42,7 +42,7 @@ case class BettingRound private (
   kind: RoundKind.Value,
   players: Seq[ManageablePlayer],
   bettingState: BettingState,
-  pot: Pot) extends AnyRef with BettingRoundExtractors with PlayersPositioning {
+  pot: Pot) extends AnyRef with PlayersPositioning {
 
   val inTurn: Option[ManageablePlayer] = bettingState.bettersToAct.headOption
 
@@ -51,62 +51,60 @@ case class BettingRound private (
   def betIsOpen = bettingState.currentBet.isDefined
 
   def place(ba: BetterAction): BettingState = {
-    val (action, better) = (ba.action, ba.better)
-    Try((action, better, kind) match {
-      case (_, OtherThanInTurn(), _) => throw new OutOfTurnException
-      case (Check, BigBlind(), PreFlop) if (bettingState.currentBet.get.value == pot.blinds.bigBlind) => Some(
-          bettingState.copy(
+    val better = ba.better
+    
+    if (hasEnded || better != inTurn.get)
+      throw new OutOfTurnException
+    else
+      ba.action match {
+        case Check =>
+          if (betIsOpen && (better != bigBlind || bettingState.currentBet.get.value != pot.blinds.bigBlind))
+            throw new CantCheckException
+          else
+            bettingState.copy(
               bettersToAct = bettingState.bettersToAct.tail,
-              bettersActed = bettingState.bettersActed :+ bettingState.bettersToAct.head))
-      case (Check, _, _) if bettingState.currentBet.isDefined => throw new CantCheckException
-      case (Check, _, _) => Some(
-          bettingState.copy(
-              bettersToAct = bettingState.bettersToAct.tail,
-              bettersActed = bettingState.bettersActed :+ bettingState.bettersToAct.head))
-      case (bet @ Bet(value), better, _) => {
-        if (betIsOpen) throw new CantBetException
-        pot.collect(value)(from = better)
-        Some(BettingState(
-          currentBet = Some(bet),
-          placedBy = better,
-          bettersToAct = bettingState.bettersToAct.tail ++ bettingState.bettersActed,
-          bettersActed = better.manageablePlayer :: Nil))
-      }
-      case (raise @ Raise(value), better, _) => {
-        if (!betIsOpen) throw new CantRaiseException
-        pot.collectUntil(value)(from = better)
-        Some(BettingState(
-          currentBet = Some(raise),
-          placedBy = better,
-          bettersToAct = bettingState.bettersToAct.tail ++ bettingState.bettersActed,
-          bettersActed = bettingState.bettersToAct.head :: Nil))
-      }
-      case (Fold, player, _) => Some(
-          bettingState.copy(bettersToAct = bettingState.bettersToAct.tail))
-
-      case (Call, player, _) => {
-        pot.collectUntilMatching(amountBettedBy = bettingState.placedBy)(from = player)
-        Some(bettingState.copy(
-          bettersToAct = bettingState.bettersToAct.tail,
-          bettersActed = bettingState.bettersActed :+ bettingState.bettersToAct.head))
-      }
-      case (AllIn, player, _) => {
-        val amount = player.stack
-        pot.collect(amount)(from = player)
-        bettingState.currentBet match {
-          case Some(Raise(earlierRaiseAmount)) if (amount <= earlierRaiseAmount) =>
-            Some(bettingState.copy(bettersToAct = bettingState.bettersToAct.tail))
-          case _ => 
-            Some(bettingState.copy(
-              currentBet = Some(Raise(amount)),
-              placedBy = player,
+              bettersActed = bettingState.bettersActed :+ bettingState.bettersToAct.head)
+        case bet @ Bet(value) =>
+          if (betIsOpen) throw new CantBetException
+          else {
+            pot.collect(value)(from = better)
+            BettingState(
+              currentBet = Some(bet),
+              placedBy = better,
               bettersToAct = bettingState.bettersToAct.tail ++ bettingState.bettersActed,
-              bettersActed = Nil))
+              bettersActed = better.manageablePlayer :: Nil)
+          }
+        case raise @ Raise(value) =>
+          if (!betIsOpen) throw new CantRaiseException
+          else {
+            pot.collectUntil(value)(from = better)
+            BettingState(
+              currentBet = Some(raise),
+              placedBy = better,
+              bettersToAct = bettingState.bettersToAct.tail ++ bettingState.bettersActed,
+              bettersActed = bettingState.bettersToAct.head :: Nil)
+          }
+        case Fold => bettingState.copy(bettersToAct = bettingState.bettersToAct.tail)
+        case AllIn => {
+          val amount = better.stack
+          pot.collect(amount)(from = better)
+          bettingState.currentBet match {
+            case Some(Raise(earlierRaiseAmount)) if (amount <= earlierRaiseAmount) =>
+              bettingState.copy(bettersToAct = bettingState.bettersToAct.tail)
+            case _ => 
+              bettingState.copy(
+                currentBet = Some(Raise(amount)),
+                placedBy = better,
+                bettersToAct = bettingState.bettersToAct.tail ++ bettingState.bettersActed,
+                bettersActed = Nil)
+          }
+        }
+        case Call => {
+          pot.collectUntilMatching(amountBettedBy = bettingState.placedBy)(from = better)
+          bettingState.copy(
+            bettersToAct = bettingState.bettersToAct.tail,
+            bettersActed = bettingState.bettersActed :+ bettingState.bettersToAct.head)
         }
       }
-    }) match {
-      case Success(updatedBet) => updatedBet.getOrElse(bettingState)
-      case Failure(e) => throw e
-    }
   }
 }
