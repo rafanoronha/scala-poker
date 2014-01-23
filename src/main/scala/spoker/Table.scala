@@ -68,7 +68,7 @@ case class Table(
       case _ => dealNextCommunityCard
     }) match {
       case Success(_) => {
-        val bta: Seq[ManageablePlayer] = bettersToAct.startingToTheLeftOfButton.filter(_.isActive)
+        val bta: Seq[ManageablePlayer] = bettersToAct.startingToTheLeftOfButton.filter(better => better.isActive && !better.isAllIn)
         copy(
           currentRound = Some(BettingRound.nextRound(
             kind = RoundKind(1 + currentRound.get.kind.id),
