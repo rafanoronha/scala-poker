@@ -25,7 +25,7 @@ case class Pot(
     potStackCollected(from.name, stack)
   }
 
-  private def potStackByPlayer(name: String): Double =
+  def potStackByPlayer(name: String): Double =
     bettingStackManagement.currentState(name)
 
   private def potStackCollected(name: String, stack: Double): Unit =

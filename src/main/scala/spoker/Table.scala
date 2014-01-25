@@ -58,27 +58,24 @@ case class Table(
   }
 
   def nextRound = {
-    object UnclosedRound {
-      def unapply(round: Some[BettingRound]): Boolean = round.map(!_.hasEnded).getOrElse(false)
-    }
-    Try((currentRound, currentRound.get.kind) match {
-      case (UnclosedRound(), _) => throw new UnclosedRoundException
-      case (_, River) => throw new NoMoreRoundsException
-      case (_, PreFlop) => dealFlopCards
+    if (!currentRound.get.hasEnded)
+      throw new UnclosedRoundException
+      
+    currentRound.get.kind match {
+      case River => throw new NoMoreRoundsException
+      case PreFlop => dealFlopCards
       case _ => dealNextCommunityCard
-    }) match {
-      case Success(_) => {
-        val bta: Seq[ManageablePlayer] = bettersToAct.startingToTheLeftOfButton.filter(better => better.isActive && !better.isAllIn)
-        copy(
-          currentRound = Some(BettingRound.nextRound(
-            kind = RoundKind(1 + currentRound.get.kind.id),
-            players = this.players.filter(_.isActive),
-            pot = this.pot,
-            bettingState = BettingState(
-              bettersToAct = bta))))
-      }
-      case Failure(e) => throw e
     }
+    
+    val newBettersToAct: Seq[ManageablePlayer] = this.startingToTheLeftOfButton.filter(better => better.isActive && !better.isAllIn)
+
+    copy(
+      currentRound = Some(BettingRound.nextRound(
+        kind = RoundKind(1 + currentRound.get.kind.id),
+        players = this.players.filter(_.isActive),
+        pot = this.pot,
+        bettingState = BettingState(
+          bettersToAct = newBettersToAct))))
   }
 
   def showdown = {
@@ -88,18 +85,22 @@ case class Table(
   }
 
   def place(ba: BetterAction): Table = {
+    val current = currentRound.get
+    val bettingState = current.place(ba)
+
     def updatePlayers: Seq[ManageablePlayer] = ba.action match {
-      case AllIn => this.players.updated(this.players.indexOf(ba.better), ba.better.pushedAllIn)
       case Fold => this.players.updated(this.players.indexOf(ba.better), ba.better.folded)
-      case _ => this.players
+      case _ => 
+        if (!bettingState.bettersActed.map(_.manageablePlayer.name).contains(ba.better.manageablePlayer.name))
+          this.players.updated(this.players.indexOf(ba.better), ba.better.pushedAllIn)
+        else
+          this.players
     }
 
     def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter(_.isActive) match {
       case winner :: Nil => winner.collect(pot.stack)(from = pot)
       case _ => ()
     }
-    val current = currentRound.get
-    val bettingState = current.place(ba)
     val updatedPlayers = updatePlayers
     potToWinner(updatedPlayers)
     copy(

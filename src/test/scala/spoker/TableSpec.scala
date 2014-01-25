@@ -139,7 +139,6 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       player3.stack should be(0)
       player1.stack should be(0)
       player2.stack should be(0)
-      
       table = table.nextRound.nextRound
       table.showdown
       player3.stack should be(150)
@@ -148,6 +147,7 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
     }
     it("can be done by raising or calling") {
       table = table.place(player3.raise(50)).place(player1.fold).place(player2.call).nextRound
+      
       table.pot.stack should be(101)
       player3.stack should be(0)
 //      player1.stack should be(49)
@@ -165,8 +165,8 @@ class TableSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       player1.stack should be(0)
 //      player1.stack should be(48)
       player3.stack should be(0)
-      
-      table = table.nextRound.nextRound
+      table = table.nextRound
+      table = table.nextRound
       table.showdown
       player3.stack should be(102)
 //      player1.stack should be(48)
