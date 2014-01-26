@@ -8,9 +8,9 @@ import spoker._
 import spoker.betting._
 import spoker.betting.stack._
 import scala.xml.Node
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class RoboPokerSpec extends FunSpec with ShouldMatchers {
+class RoboPokerSpec extends FunSpec with Matchers {
   describe("The given scenario") {
     it("should pass") {
       val file = sys.props.get("robopokerscenario")

@@ -1,12 +1,12 @@
 package spoker.betting.spec
 
 import org.scalatest.{ BeforeAndAfter, FunSpec }
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 import spoker._
 import spoker.betting._
 
-class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
+class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   var table: Table = null
 
@@ -54,10 +54,13 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
     it("should be able to fold a raised bet") {
       table.place(dealer.raise(10)).place(smallBlind.fold)
     }
+    it("should be able to push all in") {
+      table.place(dealer.allIn).place(smallBlind.allIn).place(bigBlind.allIn)
+    }
   }
   describe("Check") {
     it("should not be placed if any betting action got place") {
-      round = table.place(dealer.call).place(smallBlind.raise(10)).place(bigBlind.call).currentRound.get
+      round = table.place(dealer.call).place(smallBlind.raise(10)).place(bigBlind.allIn).currentRound.get
       evaluating {
         round.place(dealer.check)
       } should produce[CantCheckException]
@@ -79,6 +82,10 @@ class BettingSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
         round.place(smallBlind.raise(5))
       } should produce[CantRaiseException]
     }
+    it("should not be higher than player's stack") {
+      evaluating {
+        round.place(dealer.bet(2000))
+      } should produce[CantBetException]
+    }
   }
-
 }

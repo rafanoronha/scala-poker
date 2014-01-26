@@ -1,12 +1,12 @@
 package spoker.betting.spec
 
 import org.scalatest.{ BeforeAndAfter, FunSpec }
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import spoker._
 import spoker.betting._
 import org.scalatest.Tag
 
-class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
+class TurnSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   var table: Table = null
 
@@ -74,5 +74,23 @@ class TurnSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
       .place(player("p2").fold).nextRound
       .place(player("p3").bet(2))
       .place(player("p8").fold)
+  }
+  
+  describe("hasEnded") {
+    it("should return false if players haven't made any moves yet") {
+      round.hasEnded should equal(false)
+    }
+    it("should return false after limping by small blind, because big blind ends preflop round") {
+      table = table.place(dealer.call).place(smallBlind.call)
+      table.currentRound.get.hasEnded should equal(false)
+    }
+    it("should return true when big blind ends pre-flop round") {
+      table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check)
+      table.currentRound.get.hasEnded should equal(true)
+    }
+    it("should return false if the round wasn't open yet") {
+      table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check).nextRound.place(smallBlind.check)
+      table.currentRound.get.hasEnded should equal(false)
+    }
   }
 }
