@@ -4,9 +4,9 @@ import spoker._
 import spoker.hand.Hand
 import spoker.hand.HandRanking._
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class HandSpec extends FunSpec with ShouldMatchers {
+class HandSpec extends FunSpec with Matchers {
 
   it("should understand royal flush") {
     val cards = (Nine, Clubs) ::(Ace, Hearts) ::(King, Clubs) ::
