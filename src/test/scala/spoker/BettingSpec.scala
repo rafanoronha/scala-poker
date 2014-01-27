@@ -87,5 +87,30 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
         round.place(dealer.bet(2000))
       } should produce[CantBetException]
     }
+    it("should take correct amount from the player's stack in the preflop round") {
+      table.place(dealer.raise(8))
+      dealer.stack should equal(1492)
+    }
+    it("should take correct amount from the player's stack in the flop round") {
+      table.place(dealer.raise(8)).place(smallBlind.call).place(bigBlind.call)
+        .nextRound.place(smallBlind.bet(2)).place(bigBlind.raise(12))
+      bigBlind.stack should equal(1480)
+    }
+    it("should take correct amount from the player's stack in the turn round") {
+      table.place(dealer.raise(8)).place(smallBlind.call).place(bigBlind.call)
+        .nextRound.place(smallBlind.bet(2)).place(bigBlind.raise(12))
+        .place(dealer.call).place(smallBlind.call).nextRound
+        .place(smallBlind.bet(2)).place(bigBlind.raise(12))
+      bigBlind.stack should equal(1468)
+    }
+    it("should take correct amount from the player's stack in the river round") {
+      table.place(dealer.raise(8)).place(smallBlind.call).place(bigBlind.call)
+        .nextRound.place(smallBlind.bet(2)).place(bigBlind.raise(12))
+        .place(dealer.call).place(smallBlind.call).nextRound
+        .place(smallBlind.bet(2)).place(bigBlind.raise(12))
+        .place(dealer.call).place(smallBlind.call).nextRound
+        .place(smallBlind.bet(2)).place(bigBlind.raise(12))
+      bigBlind.stack should equal(1456)
+    }
   }
 }
