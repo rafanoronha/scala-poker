@@ -113,4 +113,52 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
       bigBlind.stack should equal(1456)
     }
   }
+  
+  describe("All in") {
+    it("should steal the blinds if other players fold") {
+      table.place(dealer.allIn).place(smallBlind.fold).place(bigBlind.fold)
+      dealer.stack should be(1503)
+      smallBlind.stack should be(1499)
+      bigBlind.stack should be(1498)
+    }
+    it("should be won by best showdown rank owner") {
+      table = table.place(dealer.allIn).place(smallBlind.allIn).place(bigBlind.allIn)
+      table.pot.stack should be(4500)
+      dealer.stack should be(0)
+      smallBlind.stack should be(0)
+      bigBlind.stack should be(0)
+      table = table.nextRound.nextRound
+      table.showdown
+      dealer.stack should be(4500)
+      smallBlind.stack should be(0)
+      bigBlind.stack should be(0)
+    }
+    it("can be done by raising or calling") {
+      table = table.place(dealer.raise(1500)).place(smallBlind.fold).place(bigBlind.call).nextRound
+      
+      table.pot.stack should be(3001)
+      dealer.stack should be(0)
+//      smallBlind.stack should be(49)
+      bigBlind.stack should be(0)
+      table = table.nextRound.nextRound
+      table.showdown
+      dealer.stack should be(3001)
+//      smallBlind.stack should be(49)
+      bigBlind.stack should be(0)
+    }
+    it("can be done by betting") {
+      table = table.place(dealer.call).place(smallBlind.call).place(bigBlind.check).nextRound
+      table = table.place(smallBlind.bet(1498)).place(bigBlind.fold).place(dealer.call)
+      table.pot.stack should be(3002)
+      smallBlind.stack should be(0)
+//      smallBlind.stack should be(48)
+      dealer.stack should be(0)
+      table = table.nextRound
+      table = table.nextRound
+      table.showdown
+      dealer.stack should be(3002)
+//      smallBlind.stack should be(48)
+      smallBlind.stack should be(0)
+    }
+  }
 }
