@@ -6,7 +6,6 @@ import scala.util.Try
 import org.scalatest.FunSpec
 import spoker._
 import spoker.betting._
-import spoker.betting.stack._
 import scala.xml.Node
 import org.scalatest.Matchers
 
@@ -56,7 +55,7 @@ class RoboPokerSpec extends FunSpec with Matchers {
         })
         players.foreach(p => {
           val better = table.players.find(_.player == p._1).get
-          p._2 should be(better.stack)
+          p._2 should be(table.stackManager.getPlayerStack(better))
         })
       })
     }

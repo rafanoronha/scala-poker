@@ -104,25 +104,16 @@ class TableSpec extends FunSpec with Matchers with BeforeAndAfter {
         .nextRound.place(player1.bet(10)).place(player2.fold).place(player3.call)
         .nextRound.place(player1.check).place(player3.check)
       table.showdown
-      player3.stack should be(64)
-      player2.stack should be(48)
-      player1.stack should be(38)
+      table.stackManager.getPlayerStack(player3) should be(64)
+      table.stackManager.getPlayerStack(player2) should be(48)
+      table.stackManager.getPlayerStack(player1) should be(38)
     }
     it("should be won by unmatched bet owner") {
       table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
         .nextRound.place(player2.check).place(player3.bet(8)).place(player2.fold)
-      player3.stack should be(55)
-      player2.stack should be(46)
-      player1.stack should be(49)
-    }
-    it("should collect the blinds") {
-      table.pot.stack should be(3)
-    }
-    it("should collect all played stakes") {
-      table = table.place(player3.raise(4)).place(player1.fold).place(player2.call)
-        .nextRound.place(player2.check).place(player3.bet(8)).place(player2.call)
-        .nextRound.place(player2.check).place(player3.bet(12)).place(player2.call)
-      table.pot.stack should be(49)
+      table.stackManager.getPlayerStack(player3) should be(55)
+      table.stackManager.getPlayerStack(player2) should be(46)
+      table.stackManager.getPlayerStack(player1) should be(49)
     }
   }
 }

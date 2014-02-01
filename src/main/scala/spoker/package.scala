@@ -11,6 +11,15 @@ package object spoker {
   object Suit extends Enumeration {
     val Clubs, Diamonds, Hearts, Spades = Value
   }
+  
+  object PlayerStatus {
+    trait Status
+    
+    case object Active extends Status
+    case object Inactive extends Status
+    case object Folded extends Status
+    case object AllIn extends Status
+  }
 
   case class Player(name: String)
 
