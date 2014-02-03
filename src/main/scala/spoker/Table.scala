@@ -71,14 +71,18 @@ case class Table(
   }
 
   def showdown = {
+    val communityCards = cardsManagement.currentState(this.communityName)
     val bestHand: Hand = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
-        .zip(players.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._2
+        .zip(players.map(b => Hand(b.cards ++ communityCards))).sortBy(_._2).reverse.head._2
     val winners = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
-        .filter((player) => Hand(player.cards) == bestHand)
+        .filter((player) => Hand(player.cards ++ communityCards) == bestHand)
+
+    /*
     println("best hand", bestHand)
     for (player <- players if(player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)) {
-      println(player.name, player.cards)
+      println(player.name, player.cards ++ communityCards)
     }
+    */
     stackManager.pushTableStacksToPot
     stackManager.givePotToWinners(winners.map(_.positionedPlayer))
     this
