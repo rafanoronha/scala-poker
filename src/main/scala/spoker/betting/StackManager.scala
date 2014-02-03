@@ -1,6 +1,7 @@
 package spoker.betting
 
 import spoker.`package`.Player
+import spoker.ManageablePlayer
 
 case class Blinds(smallBlind: Double, bigBlind: Double)
 
@@ -106,8 +107,12 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
     currentBet = None
   }
   
-  def givePotToWinner(player: PositionedPlayer) {
-    playerStacks = playerStacks.updated(player.name, playerStacks(player.name) + pots.head.potAmount)
+  def givePotToWinners(winners: Seq[PositionedPlayer]) {
+    val partOfPot = pots.head.potAmount / winners.size
+    for (winner <- winners) {
+      playerStacks = playerStacks.updated(winner.name, playerStacks(winner.name) + partOfPot)
+    }
+    
     pots = new Pot() :: Nil
   }
   

@@ -71,10 +71,16 @@ case class Table(
   }
 
   def showdown = {
-    val winner = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn).
-        zip(players.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._1
+    val bestHand: Hand = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
+        .zip(players.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._2
+    val winners = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
+        .filter((player) => Hand(player.cards) == bestHand)
+    println("best hand", bestHand)
+    for (player <- players if(player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)) {
+      println(player.name, player.cards)
+    }
     stackManager.pushTableStacksToPot
-    stackManager.givePotToWinner(winner.positionedPlayer)
+    stackManager.givePotToWinners(winners.map(_.positionedPlayer))
     this
   }
 
@@ -88,7 +94,7 @@ case class Table(
     def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn) match {
       case winner :: Nil => {
         stackManager.pushTableStacksToPot
-        stackManager.givePotToWinner(winner.positionedPlayer)
+        stackManager.givePotToWinners(winner.positionedPlayer :: Nil)
       }
       case _ => ()
     }

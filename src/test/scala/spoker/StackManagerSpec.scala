@@ -45,9 +45,32 @@ class StackManagerSpec extends FunSpec with Matchers with BeforeAndAfter {
       stackManager.putChipsOnTable(player1, 5)
       stackManager.putChipsOnTable(player2, 5)
       stackManager.pushTableStacksToPot
-      stackManager.givePotToWinner(player2)
+      stackManager.givePotToWinners(player2 :: Nil)
       stackManager.getPlayerStack(player2) should be(55)
       stackManager.pots.head.potAmount should be(0)
+    }
+    
+    it("should split a pot if there are multiple winners") {
+      stackManager.putChipsOnTable(player1, 4)
+      stackManager.putChipsOnTable(player2, 4)
+      stackManager.putChipsOnTable(player3, 4)
+      stackManager.pushTableStacksToPot
+      stackManager.pushTableStacksToPot
+      stackManager.givePotToWinners(player2 :: player3 :: Nil)
+      stackManager.getPlayerStack(player2) should be(52)
+      stackManager.getPlayerStack(player3) should be(52)
+    }
+    
+    it("should be able to split non-divisible pot") {
+      pending
+      stackManager.putChipsOnTable(player1, 5)
+      stackManager.putChipsOnTable(player2, 5)
+      stackManager.putChipsOnTable(player3, 5)
+      stackManager.pushTableStacksToPot
+      stackManager.pushTableStacksToPot
+      stackManager.givePotToWinners(player2 :: player3 :: Nil)
+      stackManager.getPlayerStack(player2) should be(53)
+      stackManager.getPlayerStack(player3) should be(52)
     }
     
     it("should create side pots"){pending}

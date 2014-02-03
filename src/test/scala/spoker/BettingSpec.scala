@@ -2,12 +2,24 @@ package spoker.betting.spec
 
 import org.scalatest.{ BeforeAndAfter, FunSpec }
 import org.scalatest.Matchers
-
 import spoker._
 import spoker.betting._
+import spoker.dealer._
 
 class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
 
+  type StubbedCards = scala.collection.mutable.Set[Card]
+
+  class StubbedCardsDealing(stub: Map[DealtCardTarget, StubbedCards]) extends CardsDealing {
+    override def nextCardTo(target: DealtCardTarget): Card = {
+      val card = stub(target).head
+      stub(target) -= card
+      card
+    }
+  }
+
+  val StubbedCards = scala.collection.mutable.Set
+  
   var table: Table = null
 
   var round: BettingRound = null
@@ -16,7 +28,13 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
     table = Table(
       players = new PositionedPlayer(new Player("smallBlind"), initialStack = 1500) ::
         new PositionedPlayer(new Player("bigBlind"), initialStack = 1500) ::
-        new PositionedPlayer(new Player("dealer"), initialStack = 1500, isButton = true) :: Nil).newHand
+        new PositionedPlayer(new Player("dealer"), initialStack = 1500, isButton = true) :: Nil,
+      cardsDealing = new StubbedCardsDealing(
+        Map(
+          Community -> StubbedCards((Two, Clubs), (Three, Clubs), (Four, Clubs), (Five, Clubs), (Six, Clubs)),
+          PlayerReceivingCard("smallBlind") -> StubbedCards((Nine, Hearts), (Ten, Hearts)),
+          PlayerReceivingCard("bigBlind") -> StubbedCards((Nine, Spades), (Ten, Spades)),
+          PlayerReceivingCard("dealer") -> StubbedCards((Two, Hearts), (Two, Spades))))).newHand
     round = table.currentRound.get
   }
 
@@ -116,10 +134,7 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
   
   describe("All in") {
     it("should steal the blinds if other players fold") {
-      table.
-        place(dealer.allIn).
-        place(smallBlind.fold).
-        place(bigBlind.fold)
+      table.place(dealer.allIn).place(smallBlind.fold).place(bigBlind.fold)
       table.stackManager.getPlayerStack("dealer") should be(1503)
       table.stackManager.getPlayerStack("smallBlind") should be(1499)
       table.stackManager.getPlayerStack("bigBlind") should be(1498)
@@ -133,6 +148,7 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
       table.stackManager.getPlayerStack("bigBlind") should be(0)
     }
     it("can be done by raising or calling") {
+      println("can be done by raising or calling")
       table = table.place(dealer.raise(1500)).place(smallBlind.fold).place(bigBlind.call).nextRound
       table = table.nextRound.nextRound
       table.showdown
