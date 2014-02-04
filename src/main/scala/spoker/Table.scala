@@ -73,7 +73,7 @@ case class Table(
   def showdown = {
     val communityCards = cardsManagement.currentState(this.communityName)
     val activePlayers = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
-    val bestHand: Hand = activePlayers.zip(activePlayers.map(b => Hand(b.cards ++ communityCards))).sortBy(_._2).reverse.head._2
+    val bestHand: Hand = activePlayers.map(b => Hand(b.cards ++ communityCards)).sorted.last
     val winners = activePlayers.filter((player) => Hand(player.cards ++ communityCards) == bestHand)
 
     stackManager.pushTableStacksToPot
