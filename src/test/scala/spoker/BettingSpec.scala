@@ -31,7 +31,7 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
         new PositionedPlayer(new Player("dealer"), initialStack = 1500, isButton = true) :: Nil,
       cardsDealing = new StubbedCardsDealing(
         Map(
-          Community -> StubbedCards((Two, Clubs), (Three, Clubs), (Four, Clubs), (Five, Clubs), (Six, Clubs)),
+          Community -> StubbedCards((Two, Clubs), (Queen, Diamonds), (Four, Clubs), (Five, Clubs), (Six, Clubs)),
           PlayerReceivingCard("smallBlind") -> StubbedCards((Nine, Hearts), (Ten, Hearts)),
           PlayerReceivingCard("bigBlind") -> StubbedCards((Nine, Spades), (Ten, Spades)),
           PlayerReceivingCard("dealer") -> StubbedCards((Two, Hearts), (Two, Spades))))).newHand
@@ -148,7 +148,6 @@ class BettingSpec extends FunSpec with Matchers with BeforeAndAfter {
       table.stackManager.getPlayerStack("bigBlind") should be(0)
     }
     it("can be done by raising or calling") {
-      println("can be done by raising or calling")
       table = table.place(dealer.raise(1500)).place(smallBlind.fold).place(bigBlind.call).nextRound
       table = table.nextRound.nextRound
       table.showdown
