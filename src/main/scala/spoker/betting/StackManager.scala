@@ -3,29 +3,29 @@ package spoker.betting
 import spoker.`package`.Player
 import spoker.ManageablePlayer
 
-case class Blinds(smallBlind: Double, bigBlind: Double)
+case class Blinds(smallBlind: Int, bigBlind: Int)
 
 class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
   
   class Pot (open: Boolean = true) {
-    var potAmount: Double = 0
+    var potAmount: Int = 0
     var players: Set[String] = Set.empty
     
-    def addStack(playerName: String, amount: Double) {
+    def addStack(playerName: String, amount: Int) {
       potAmount = potAmount + amount
       players = players + playerName
     }
   }
   
-  var currentBet: Option[Double] = None
+  var currentBet: Option[Int] = None
   var betPlacedBy: Option[PositionedPlayer] = None
   
-  private var playerStacks: Map[String, Double] =
+  private var playerStacks: Map[String, Int] =
     players.map(player => player.name -> player.initialStack).toMap
   
-  private def emptyStacks = players.map(player => player.name -> 0.0).toMap
+  private def emptyStacks = players.map(player => player.name -> 0).toMap
   
-  private var tableStacks: Map[String, Double] = emptyStacks
+  private var tableStacks: Map[String, Int] = emptyStacks
     
   var pots: List[Pot] = new Pot() :: Nil
 
@@ -42,7 +42,7 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
       throw new CantCheckException
   }
 
-  def bet(player: PositionedPlayer, amount: Double) {
+  def bet(player: PositionedPlayer, amount: Int) {
     currentBet match {
       case Some(amount) => throw new CantBetException
       case None => {
@@ -62,7 +62,7 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
     }
   }
   
-  def raise(player: PositionedPlayer, amount: Double) {
+  def raise(player: PositionedPlayer, amount: Int) {
     currentBet match {
       case None => throw new CantRaiseException
       case Some(betAmount) => {
@@ -88,13 +88,13 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
     }
   }
   
-  def putChipsOnTable(player: PositionedPlayer, amount: Double) {
+  def putChipsOnTable(player: PositionedPlayer, amount: Int) {
     if (amount >= playerStacks(player.name)) 
         throw new NotEnoughtChipsInStackException
     putChipsOnTableWithoutAllInCheck(player, amount)
   }
   
-  private def putChipsOnTableWithoutAllInCheck(player: PositionedPlayer, amount: Double) {
+  private def putChipsOnTableWithoutAllInCheck(player: PositionedPlayer, amount: Int) {
     playerStacks = playerStacks.updated(player.name, playerStacks(player.name) - amount)
     tableStacks = tableStacks.updated(player.name, tableStacks(player.name) + amount)
   }
@@ -116,11 +116,11 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
     pots = new Pot() :: Nil
   }
   
-  def getPlayerStack(player: PositionedPlayer): Double = playerStacks(player.name)
-  def getPlayerStack(player: String): Double = playerStacks(player)
+  def getPlayerStack(player: PositionedPlayer): Int = playerStacks(player.name)
+  def getPlayerStack(player: String): Int = playerStacks(player)
 
-  def getTableStack(player: PositionedPlayer): Double = tableStacks(player.name)
-  def getTableStack(player: String): Double = tableStacks(player)
+  def getTableStack(player: PositionedPlayer): Int = tableStacks(player.name)
+  def getTableStack(player: String): Int = tableStacks(player)
   
   override def toString: String = {
     val playerStackString = playerStacks.keys.map((player) => player + ": " + playerStacks(player)).mkString(", ")

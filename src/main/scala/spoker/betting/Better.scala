@@ -8,7 +8,7 @@ case class Better(manageablePlayer: ManageablePlayer) {
 
   def myActionIs(a: Action) = myAction(a)
 
-  def bet(value: Double) = myActionIs(Bet(value))
+  def bet(value: Int) = myActionIs(Bet(value))
 
   def call = myActionIs(Call)
 
@@ -16,7 +16,7 @@ case class Better(manageablePlayer: ManageablePlayer) {
 
   def allIn = myActionIs(AllIn)
 
-  def raise(value: Double) = myActionIs(Raise(value))
+  def raise(value: Int) = myActionIs(Raise(value))
 
   def fold = myActionIs(Fold)
 

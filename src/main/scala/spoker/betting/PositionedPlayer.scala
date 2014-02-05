@@ -5,7 +5,7 @@ import spoker.PlayerStatus._
 
 case class PositionedPlayer(
   player: Player,
-  initialStack: Double,
+  initialStack: Int,
   isButton: Boolean = false,
   status: Status = Active) {
 
