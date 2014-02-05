@@ -62,7 +62,6 @@ class StackManagerSpec extends FunSpec with Matchers with BeforeAndAfter {
     }
     
     it("should be able to split non-divisible pot") {
-      pending
       stackManager.putChipsOnTable(player1, 5)
       stackManager.putChipsOnTable(player2, 5)
       stackManager.putChipsOnTable(player3, 5)

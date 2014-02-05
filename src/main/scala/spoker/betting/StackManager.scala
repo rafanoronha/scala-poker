@@ -113,6 +113,11 @@ class StackManager(players: Seq[PositionedPlayer], blinds: Blinds) {
       playerStacks = playerStacks.updated(winner.name, playerStacks(winner.name) + partOfPot)
     }
     
+    val remainderOfPot = pots.head.potAmount - (partOfPot * winners.size)
+    for (winner <- winners.take(remainderOfPot)) {
+      playerStacks = playerStacks.updated(winner.name, playerStacks(winner.name) + 1)
+    }
+    
     pots = new Pot() :: Nil
   }
   
