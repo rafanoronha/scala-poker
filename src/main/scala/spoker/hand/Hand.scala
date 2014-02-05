@@ -46,6 +46,10 @@ sealed abstract class Hand(var c: Cards, var m: Cards) extends Ordered[Hand] {
       case _ => (that == this)
     }
   }
+  
+  override def toString(): String = {
+    "rank: %s, cards: %s, matched: %s".format(ranking, cards.mkString, matched.mkString)
+  }
 }
 
 private object HandSpecializations {

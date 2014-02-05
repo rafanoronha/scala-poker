@@ -1,13 +1,11 @@
 package spoker
 
 import spoker.betting.PositionedPlayer
-import spoker.betting.stack.{StackHolder, StackManagement}
 import spoker.dealer.CardsManagement
 
 case class ManageablePlayer(
   val positionedPlayer: PositionedPlayer,
-  val cardsManagement: CardsManagement,
-  val stackManagement: StackManagement) extends StackHolder {
+  val cardsManagement: CardsManagement ) {
 
   val name = positionedPlayer.name
 
@@ -16,12 +14,12 @@ case class ManageablePlayer(
   def cards: Cards = cardsManagement.currentState(name)
 
   def folded = copy(
-    positionedPlayer = positionedPlayer.copy(isActive = false))
+    positionedPlayer = positionedPlayer.copy(status = PlayerStatus.Folded))
 
   def pushedAllIn = copy(
-    positionedPlayer = positionedPlayer.copy(isAllIn = true))
+    positionedPlayer = positionedPlayer.copy(status = PlayerStatus.AllIn))
 
   override def equals(that: Any) = that match {
-    case mp: ManageablePlayer => this.player == mp.player
+    case mp: ManageablePlayer => this.positionedPlayer == mp.positionedPlayer
   }
 }

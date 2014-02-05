@@ -5,7 +5,6 @@ import scala.util.{ Failure, Success, Try, Random }
 
 import spoker._
 import spoker.betting._
-import spoker.betting.stack._
 import spoker.dealer._
 import spoker.hand._
 
@@ -15,34 +14,24 @@ object Table {
     blinds: Blinds = Blinds(smallBlind = 1, bigBlind = 2),
     cardsDealing: CardsDealing = CardsDealing): Table = {
     val cardsManagement = new CardsManagement
-    val stackManagement = new StackManagement {
-      def initialState(holderName: String): Double =
-        if (holderName == "Pot") 0
-        else players.find(_.name == holderName).get.initialStack
-    }
     new Table(
       currentRound = None,
-      pot = Pot(
-        blinds = blinds,
-        stackManagement = stackManagement),
       players = players.map(p =>
         ManageablePlayer(
           positionedPlayer = p,
-          cardsManagement = cardsManagement,
-          stackManagement = stackManagement)),
+          cardsManagement = cardsManagement)),
       cardsDealing = cardsDealing,
       cardsManagement = cardsManagement,
-      stackManagement = stackManagement)
+      stackManager = new StackManager(players, blinds))
   }
 }
 
 case class Table(
   currentRound: Option[BettingRound],
-  pot: Pot,
   players: Seq[ManageablePlayer],
   cardsDealing: CardsDealing,
   cardsManagement: CardsManagement,
-  stackManagement: StackManagement)
+  stackManager: StackManager)
   extends AnyRef with Dealer with PlayersPositioning {
 
   def newHand = {
@@ -52,7 +41,7 @@ case class Table(
         bettersToAct = bettersToAct.startingToTheLeftOfBigBlind,
         smallBlind = smallBlind,
         bigBlind = bigBlind,
-        pot = pot)))
+        stackManager = stackManager)))
     table.dealHoleCards
     table
   }
@@ -67,46 +56,62 @@ case class Table(
       case _ => dealNextCommunityCard
     }
     
-    val newBettersToAct: Seq[ManageablePlayer] = this.startingToTheLeftOfButton.filter(better => better.isActive && !better.isAllIn)
+    stackManager.pushTableStacksToPot
+    
+    val newBettersToAct: Seq[ManageablePlayer] = this.startingToTheLeftOfButton.filter(_.status == PlayerStatus.Active)
 
     copy(
       currentRound = Some(BettingRound.nextRound(
         kind = RoundKind(1 + currentRound.get.kind.id),
-        players = this.players.filter(_.isActive),
-        pot = this.pot,
-        bettingState = BettingState(
-          bettersToAct = newBettersToAct))))
+        players = this.players.filter(_.status == PlayerStatus.Active),
+        stackManager = stackManager,
+        bettingState = new BettingState(
+          bettersToAct = newBettersToAct
+          ))))
   }
 
   def showdown = {
-    val winner = players.filter(_.isActive).zip(players.map(b => Hand(b.cards))).sortBy(_._2).reverse.head._1
-    winner.collect(pot.stack)(from = pot)
+    val communityCards = cardsManagement.currentState(this.communityName)
+    val activePlayers = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn)
+    val bestHand: Hand = activePlayers.map(b => Hand(b.cards ++ communityCards)).sorted.last
+    val winners = activePlayers.filter((player) => Hand(player.cards ++ communityCards) == bestHand)
+
+    stackManager.pushTableStacksToPot
+    stackManager.givePotToWinners(winners.map(_.positionedPlayer))
     this
   }
 
   def place(ba: BetterAction): Table = {
-    val current = currentRound.get
-    val bettingState = current.place(ba)
-
-    def updatePlayers: Seq[ManageablePlayer] = ba.action match {
-      case Fold => this.players.updated(this.players.indexOf(ba.better), ba.better.folded)
-      case _ => 
-        if (!bettingState.bettersActed.map(_.manageablePlayer.name).contains(ba.better.manageablePlayer.name))
-          this.players.updated(this.players.indexOf(ba.better), ba.better.pushedAllIn)
-        else
-          this.players
+    def updatePlayers(action: Action): Seq[ManageablePlayer] = action match {
+      case Fold => this.players.updated(this.players.indexOf(ba.better), ba.better.folded) 
+      case AllIn => this.players.updated(this.players.indexOf(ba.better), ba.better.pushedAllIn)
+      case _ => this.players
     }
 
-    def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter(_.isActive) match {
-      case winner :: Nil => winner.collect(pot.stack)(from = pot)
+    def potToWinner(players: Seq[ManageablePlayer]): Unit = players.filter((player) => player.status == PlayerStatus.Active || player.status == PlayerStatus.AllIn) match {
+      case winner :: Nil => {
+        stackManager.pushTableStacksToPot
+        stackManager.givePotToWinners(winner.positionedPlayer :: Nil)
+      }
       case _ => ()
     }
-    val updatedPlayers = updatePlayers
+
+    val current = currentRound.get
+    
+    val (newBettingState, updatedPlayers) = try {
+      (current.place(ba), updatePlayers(ba.action))
+    } catch {
+      case e: NotEnoughtChipsInStackException => {
+        (current.place(ba.better.allIn), updatePlayers(AllIn))
+      }
+      case e: Exception => throw e
+    }
+
     potToWinner(updatedPlayers)
     copy(
       players = updatedPlayers,
       currentRound = Some(currentRound.get.copy(
         players = updatedPlayers,
-        bettingState = bettingState)))
+        bettingState = newBettingState)))
   }
 }

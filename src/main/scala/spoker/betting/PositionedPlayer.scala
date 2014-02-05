@@ -1,13 +1,13 @@
 package spoker.betting
 
 import spoker.Player
+import spoker.PlayerStatus._
 
 case class PositionedPlayer(
   player: Player,
-  initialStack: Double,
+  initialStack: Int,
   isButton: Boolean = false,
-  isActive: Boolean = true,
-  isAllIn: Boolean = false) {
+  status: Status = Active) {
 
   val name = player.name
 
